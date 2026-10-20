@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
+import express from 'express';
+import {once} from 'node:events';
+import {stateRoutes} from '../db/state.js';
 import {connect} from '../db/connection.js';
 const pool=connect(),db=await pool.connect(),id=`verification-${randomUUID()}`;
 try{
@@ -10,6 +13,10 @@ try{
   await db.query(`INSERT INTO events(match_id,sequence,clock_seconds,period,type,team_id,possession_id,home_score,away_score)
    VALUES($1,$2,$3,$4,'pressure','team-2',$5,0,0)`,[id,sequence,clock,period,possession]);
  }
+ await db.query(`INSERT INTO events(match_id,sequence,clock_seconds,period,type,team_id,possession_id,outcome,home_score,away_score,details)
+  VALUES($1,6,2801,2,'shot','team-1',3,'goal',1,0,'{"xg":0.25}')`,[id]);
+ await db.query(`INSERT INTO tracking_frames(match_id,through_sequence,clock_seconds,period,ball,positions)
+  VALUES($1,2,3,1,'{"x":20,"y":30}','[]'),($1,6,2801,2,'{"x":90,"y":30}','[]')`,[id]);
  await db.query('SET LOCAL ROLE matchlens_app');
  assert.equal((await db.query('SELECT * FROM replay_pressing_sequences($1,0)',[id])).rowCount,0);
  const prefix=(await db.query('SELECT * FROM replay_pressing_sequences($1,1)',[id])).rows;
@@ -21,6 +28,29 @@ try{
   await assert.rejects(db.query(`SELECT * FROM ${table} LIMIT 1`),{code:'42501'});
   await db.query('ROLLBACK TO SAVEPOINT privilege_check');
  }
+ // Production uses a pool; serialize the transaction-bound test client's reads.
+ let queryQueue:Promise<unknown>=Promise.resolve();
+ const query=((...args:unknown[])=>{
+  const result=queryQueue.then(()=>Reflect.apply(db.query,db,args));
+  queryQueue=result.catch(()=>undefined);return result;
+ }) as typeof db.query;
+ const app=express();app.use('/matches',stateRoutes({query}));
+ const server=app.listen(0,'127.0.0.1');await once(server,'listening');
+ try{
+  const address=server.address();assert.ok(address&&typeof address!=='string');
+  const base=`http://127.0.0.1:${address.port}/matches`;
+  const early=await (await fetch(`${base}/${id}/state?atSeconds=3`)).json();
+  assert.equal(early.throughSequence,2);assert.equal(early.statistics.score.home,0);
+  assert.equal(early.events.length,2);assert.equal(early.keyEvents.length,0);assert.equal(early.frame.through_sequence,2);
+  assert.equal(early.statistics.teams[1].pressingSequences,1);
+  const exact=await (await fetch(`${base}/${id}/state?throughSequence=1`)).json();
+  assert.equal(exact.throughSequence,1);assert.equal(exact.frame,null);
+  const goal=await (await fetch(`${base}/${id}/state?atSeconds=2801`)).json();
+  assert.equal(goal.keyEvents[0].sequence,6);assert.equal(goal.statistics.score.home,1);assert.equal(goal.statistics.teams[0].xg,.25);
+  for(const query of ['', '?atSeconds=2&throughSequence=1','?atSeconds=-1','?atSeconds=0.5'])
+   assert.equal((await fetch(`${base}/${id}/state${query}`)).status,400);
+  assert.equal((await fetch(`${base}/missing/state?atSeconds=0`)).status,404);
+ }finally{await new Promise<void>((resolve,reject)=>server.close(e=>e?reject(e):resolve()));}
  await db.query('RESET ROLE');
  const insight=(await db.query(`INSERT INTO insights(match_id,through_sequence,kind,audience,language,model_version,body)
   VALUES($1,2,'talking_point','analyst','en','test','Two pressure observations in one sequence') RETURNING id`,[id])).rows[0].id;
@@ -41,5 +71,5 @@ try{
   VALUES($1,$2,2,'test','rewrite','{}')`,[insight,id]);
  await db.query('SET LOCAL ROLE matchlens_app');
  assert.equal((await db.query('SELECT * FROM replay_producer_feed WHERE match_id=$1',[id])).rowCount,0);
- console.log('Passed: pressing deduplication/gap/possession/period, replay cutoff, private access, producer evidence/verification/rewrite. Fixtures rolled back.');
+ console.log('Passed: pressing deduplication/gap/possession/period, replay cutoff, private access, producer evidence/verification/rewrite. Match-state HTTP cutoffs and validation passed. Fixtures rolled back.');
 }finally{await db.query('ROLLBACK');db.release();await pool.end();}

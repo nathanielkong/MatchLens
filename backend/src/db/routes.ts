@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import {stateRoutes} from './state.js';
 import { connect } from './connection.js';
 export const database = connect('app');
 export const matchRoutes=Router();
 matchRoutes.get('/',async(_req,res)=>{
-  const {rows}=await database.query(`SELECT m.*,h.name AS home_team,a.name AS away_team FROM replay_matches m JOIN teams h ON h.id=m.home_team_id JOIN teams a ON a.id=m.away_team_id ORDER BY m.id`);
+  const {rows}=await database.query(`SELECT m.*,h.name AS home_team,a.name AS away_team,h.metadata->>'color' AS home_color,a.metadata->>'color' AS away_color FROM replay_matches m JOIN teams h ON h.id=m.home_team_id JOIN teams a ON a.id=m.away_team_id ORDER BY m.id`);
   res.json({matches:rows});
 });
 matchRoutes.get('/:id/lineups',async(req,res)=>{
@@ -49,3 +50,5 @@ matchRoutes.get('/:id/producer-feed',async(req,res)=>{
  const {rows}=await database.query('SELECT * FROM replay_producer_feed WHERE match_id=$1 AND through_sequence<=$2 ORDER BY through_sequence,id',[req.params.id,throughSequence]);
  res.json({throughSequence,insights:rows});
 });
+
+matchRoutes.use(stateRoutes(database));
