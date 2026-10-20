@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {positionsAt,ballAt,ballKeyframes,advanceClock,type Frame,type VisualEvent} from '../src/motion.ts';
+import {positionsAt,ballAt,ballKeyframes,ballTravelSeconds,advanceClock,type Frame,type VisualEvent} from '../src/motion.ts';
 const frame=(t:number,seq:number,x:number,ids=['a'],period=1):Frame=>({clock_seconds:t,through_sequence:seq,period,ball:{x,y:50},positions:ids.map(playerId=>({playerId,teamId:'home',x,y:50}))});
 const event=(type:string,time:number,seq:number,details:Record<string,unknown>={}):VisualEvent=>({type,clock_seconds:time,sequence:seq,period:1,team_id:'home',player_id:'a',x:10,y:20,end_x:40,end_y:60,details});
 test('linear motion is clamped to samples; roster changes do not appear early',()=>{
@@ -41,4 +41,20 @@ test('playback advances by elapsed time independently of refresh rate and stops 
  for(let i=0;i<20;i++)slow=advanceClock(slow,1/20,8,100);
  assert.ok(Math.abs(fast-8)<1e-10);assert.ok(Math.abs(fast-slow)<1e-10);
  assert.equal(advanceClock(99,1,8,100),100);
+});
+
+test('pass flight uses ball speed, holds before release, and keeps the event timestamp',()=>{
+ const pass={...event('pass',10,2,{durationSeconds:8,ballSpeedKmh:37.8}),x:0,y:50,end_x:20,end_y:50};
+ assert.ok(Math.abs(ballTravelSeconds(pass)-2)<1e-10); // 21 metres at 10.5 metres/second
+ const points=ballKeyframes([frame(2,1,0),frame(10,2,20)],[pass]);
+ assert.deepEqual(ballAt({time:7},points),{x:0,y:50});
+ assert.deepEqual(ballAt({time:9},points),{x:10,y:50});
+ assert.deepEqual(ballAt({time:10},points),{x:20,y:50});
+});
+test('shots fly faster than carries; inconsistent speed is capped by the available action time',()=>{
+ const shot={...event('shot',10,2,{durationSeconds:6,shotSpeedKmh:75.6}),x:0,y:50,end_x:20,end_y:50};
+ assert.ok(Math.abs(ballTravelSeconds(shot)-1)<1e-10);
+ assert.equal(ballTravelSeconds({...shot,type:'carry'}),6);
+ assert.equal(ballTravelSeconds({...shot,details:{durationSeconds:.5,shotSpeedKmh:75.6}}),.5);
+ assert.equal(ballTravelSeconds({...shot,details:{durationSeconds:6,shotSpeedKmh:0}}),6);
 });

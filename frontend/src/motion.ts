@@ -38,12 +38,24 @@ export function globalPoint(x:number|null,y:number|null,event:VisualEvent):Point
  if(x===null||y===null)return null;
  return event.details.attackDirection===-1?{x:100-x,y:100-y}:{x,y};
 }
+// Action time includes waiting/deciding. Reserve only the final distance/speed
+// portion for pass/shot flight, ending at the recorded event timestamp.
+export function ballTravelSeconds(e:VisualEvent):number{
+ const action=Number(e.details.durationSeconds??0);
+ if(!['pass','shot'].includes(e.type))return action;
+ const speed=Number(e.type==='shot'?e.details.shotSpeedKmh:e.details.ballSpeedKmh);
+ const a=globalPoint(e.x,e.y,e),b=globalPoint(e.end_x,e.end_y,e);
+ if(!a||!b||!Number.isFinite(speed)||speed<=0)return action;
+ const distance=Math.hypot((b.x-a.x)*1.05,(b.y-a.y)*.68);
+ const flight=Math.max(.05,distance/(speed/3.6));
+ return action>0?Math.min(action,flight):flight;
+}
 export function ballKeyframes(frames:Frame[],events:VisualEvent[]):BallKeyframe[]{
  const points:BallKeyframe[]=frames.map(f=>({...f.ball,clock_seconds:f.clock_seconds,period:f.period,through_sequence:f.through_sequence,priority:2}));
  for(const e of events){
   if(!['pass','shot','carry'].includes(e.type))continue;
   const start=globalPoint(e.x,e.y,e),end=globalPoint(e.end_x,e.end_y,e);
-  const duration=Number(e.details.durationSeconds??0);
+  const duration=ballTravelSeconds(e);
   if(start&&duration>0)points.push({...start,clock_seconds:Math.max(0,e.clock_seconds-duration),period:e.period,through_sequence:e.sequence,priority:0});
   if(end)points.push({...end,clock_seconds:e.clock_seconds,period:e.period,through_sequence:e.sequence,priority:1});
  }

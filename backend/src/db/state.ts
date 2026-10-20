@@ -20,6 +20,7 @@ export function stateRoutes(database:Pick<Pool,'query'>){
     x:e.x??null,y:e.y??null,
     end_x:e.end_x??null,end_y:e.end_y??null,
     details:{durationSeconds:e.details.durationSeconds,attackDirection:e.details.attackDirection,
+     ballSpeedKmh:e.details.ballSpeedKmh,shotSpeedKmh:e.details.shotSpeedKmh,
      outPlayerId:e.details.outPlayerId,inPlayerId:e.details.inPlayerId}}))});
  });
  router.get('/:id/state',async(req,res)=>{
