@@ -16,7 +16,7 @@
     "db:migrate": "npm run db:migrate -w backend",
     "db:seed": "npm run db:seed -w backend",
     "db:verify": "npm run db:verify -w backend",
-    "test": "npm run test -w backend",
+    "test": "npm run test --workspaces --if-present",
     "db:azure": "node backend/scripts/migrate-azure.mjs",
     "db:finalise": "npm run db:finalise -w backend",
     "db:test": "npm run db:test -w backend"

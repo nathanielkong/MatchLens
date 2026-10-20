@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 import express from 'express';
 import {once} from 'node:events';
+import {groupPressing,type ReplayEvent} from '../analytics/statistics.js';
 import {stateRoutes} from '../db/state.js';
 import {connect} from '../db/connection.js';
 const pool=connect(),db=await pool.connect(),id=`verification-${randomUUID()}`;
@@ -29,11 +30,14 @@ try{
   await db.query('ROLLBACK TO SAVEPOINT privilege_check');
  }
  // Production uses a pool; serialize the transaction-bound test client's reads.
+ let queryCount=0;
  let queryQueue:Promise<unknown>=Promise.resolve();
  const query=((...args:unknown[])=>{
-  const result=queryQueue.then(()=>Reflect.apply(db.query,db,args));
+  queryCount++;const result=queryQueue.then(()=>Reflect.apply(db.query,db,args));
   queryQueue=result.catch(()=>undefined);return result;
  }) as typeof db.query;
+ const eventPrefix=(await db.query<ReplayEvent>('SELECT * FROM replay_events WHERE match_id=$1 AND sequence<=5 ORDER BY sequence',[id])).rows;
+ assert.deepEqual(groupPressing(eventPrefix),grouped.map(g=>({team_id:g.team_id,start_sequence:g.start_sequence,last_sequence:g.last_sequence,raw_pressure_records:g.raw_pressure_records})));
  const app=express();app.use('/matches',stateRoutes({query}));
  const server=app.listen(0,'127.0.0.1');await once(server,'listening');
  try{
@@ -49,6 +53,13 @@ try{
   assert.equal(goal.keyEvents[0].sequence,6);assert.equal(goal.statistics.score.home,1);assert.equal(goal.statistics.teams[0].xg,.25);
   for(const query of ['', '?atSeconds=2&throughSequence=1','?atSeconds=-1','?atSeconds=0.5'])
    assert.equal((await fetch(`${base}/${id}/state${query}`)).status,400);
+  const visual=await (await fetch(`${base}/${id}/visual-replay`)).json();
+  assert.equal(visual.purpose,'visual-only');assert.equal(visual.containsFutureSamples,true);assert.equal(visual.frames.length,2);
+  assert.equal(visual.frames[1].through_sequence,6);
+  assert.equal(visual.events[0].home_score,undefined);assert.equal(visual.events[0].details.xg,undefined);
+  const rewind=await (await fetch(`${base}/${id}/state?atSeconds=3&includeFrame=false`)).json();
+  assert.equal(rewind.frame,null);assert.equal(rewind.statistics.score.home,0);assert.equal(rewind.throughSequence,2);
+  assert.equal(queryCount,3,'Repeated evidence and visual requests reuse the bounded replay cache');
   assert.equal((await fetch(`${base}/missing/state?atSeconds=0`)).status,404);
  }finally{await new Promise<void>((resolve,reject)=>server.close(e=>e?reject(e):resolve()));}
  await db.query('RESET ROLE');

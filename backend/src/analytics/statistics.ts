@@ -2,6 +2,7 @@ export type ReplayEvent = {
  sequence:number;clock_seconds:number;period:number;type:string;team_id:string|null;
  player_id:string|null;possession_id:number;outcome:string|null;details:Record<string,unknown>;
  home_score:number;away_score:number;
+ x?:number|null;y?:number|null;end_x?:number|null;end_y?:number|null;
 };
 export type PressingSequence={team_id:string;start_sequence:number;last_sequence:number;raw_pressure_records:number};
 export function calculateStatistics(events:ReplayEvent[],teamIds:string[],pressing:PressingSequence[]) {
@@ -37,4 +38,18 @@ export function calculateStatistics(events:ReplayEvent[],teamIds:string[],pressi
   possessionTeamId:last?.details.possessionTeamId??null,teams,
   definitions:{possessionEstimate:'Share of recorded action duration; excludes restarts and stoppages. Not official time-in-possession.',
    xg:'Sum of synthetic shot xG; not calibrated on real matches.',pressingSequences:'press-v1: same team, possession and period, no more than 10 seconds between pressure observations.'}};
+}
+
+// Same operational definition as replay_pressing_sequences / press-v1. Group
+// only the supplied prefix; never reuse full-match group lengths at an earlier cutoff.
+export function groupPressing(events:ReplayEvent[]):PressingSequence[]{
+ const groups:PressingSequence[]=[],latest=new Map<string,{clock:number;group:PressingSequence}>();
+ for(const e of events){if(e.type!=='pressure'||!e.team_id)continue;
+  const key=JSON.stringify([e.team_id,e.possession_id,e.period]),previous=latest.get(key);
+  let group=previous?.group;
+  if(!previous||e.clock_seconds-previous.clock>10){group={team_id:e.team_id,start_sequence:e.sequence,last_sequence:e.sequence,raw_pressure_records:0};groups.push(group);}
+  group!.last_sequence=e.sequence;group!.raw_pressure_records++;
+  latest.set(key,{clock:e.clock_seconds,group:group!});
+ }
+ return groups;
 }
