@@ -1,0 +1,28 @@
+{
+  "name": "matchlens",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n frontend,backend \"npm run dev -w frontend\" \"npm run dev -w backend\"",
+    "build": "npm run build --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "start": "npm run start -w backend",
+    "db:up": "docker compose up -d --wait",
+    "db:stop": "docker compose stop",
+    "db:migrate": "npm run db:migrate -w backend",
+    "db:seed": "npm run db:seed -w backend",
+    "db:verify": "npm run db:verify -w backend",
+    "test": "npm run test -w backend",
+    "db:azure": "node backend/scripts/migrate-azure.mjs",
+    "db:finalise": "npm run db:finalise -w backend",
+    "db:test": "npm run db:test -w backend"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.6",
+    "typescript": "^7.0.2"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "generatorVersion": "2.0.0",
+  "plans": [
+    {
+      "split": "showcase",
+      "count": 16,
+      "seed": 2000000
+    },
+    {
+      "split": "train",
+      "count": 1000,
+      "seed": 3000000
+    },
+    {
+      "split": "validation",
+      "count": 200,
+      "seed": 4000000
+    },
+    {
+      "split": "evaluation",
+      "count": 300,
+      "seed": 5000000
+    }
+  ],
+  "matchSeed": "plan.seed + zero-based match index",
+  "selectionSeed": "match seed + 10000000",
+  "abilitySeed": "710000 + zero-based player index"
+}
