@@ -75,3 +75,12 @@ test('a restart is a dead-ball reposition, not a slow cross-pitch pass',()=>{
  assert.deepEqual(ballAt({time:25},balls),{x:100,y:50});
  assert.deepEqual(ballAt({time:35},balls),{x:50,y:50});
 });
+
+test('cached player paths retain event ordering across halves and after a rewind',()=>{
+ const frames=[frame(0,1,0),frame(10,2,20),frame(10,3,90,['a'],2),frame(20,4,100,['a'],2)];
+ const paths=playerKeyframes(frames,[]);
+ assert.equal(anchoredPositionsAt({time:10,sequence:2},frames,[],paths)[0].x,20);
+ assert.equal(anchoredPositionsAt({time:10,sequence:3},frames,[],paths)[0].x,90);
+ assert.equal(anchoredPositionsAt({time:15},frames,[],paths)[0].x,95);
+ assert.equal(anchoredPositionsAt({time:5},frames,[],paths)[0].x,10);
+});

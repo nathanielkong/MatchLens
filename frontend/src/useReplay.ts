@@ -44,7 +44,7 @@ export function useReplay(match:Match|undefined,retry:number){
    const dt=previous?(timestamp-previous)/1000:0;previous=timestamp;
    if(playingRef.current&&!document.hidden){cursor.current={time:advanceClock(cursor.current.time,dt,speedRef.current,match.duration_seconds)};
     if(cursor.current.time>=match.duration_seconds)pause();}
-   if(timeline.current)timeline.current.value=String(cursor.current.time);
+   if(timeline.current&&Number(timeline.current.value)!==cursor.current.time)timeline.current.value=String(cursor.current.time);
    if(timestamp-lastUi>=100){lastUi=timestamp;setTime(cursor.current.time);refresh();}
    handle=requestAnimationFrame(tick);
   };

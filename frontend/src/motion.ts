@@ -94,12 +94,25 @@ export function playerKeyframes(frames:Frame[],events:VisualEvent[]){
  for(const [id,points] of paths)paths.set(id,points.sort((a,b)=>a.clock_seconds-b.clock_seconds||a.period-b.period||a.priority-b.priority||a.through_sequence-b.through_sequence).filter((p,i,all)=>i===all.length-1||p.clock_seconds!==all[i+1].clock_seconds||p.period!==all[i+1].period));
  return paths;
 }
-export function anchoredPositionsAt(cursor:Cursor,frames:Frame[],changes:VisualEvent[],paths:Map<string,BallKeyframe[]>){
+type PlayerPaths=Map<string,BallKeyframe[]>;
+// Keyframe maps are immutable after construction. Index each half once rather
+// than filtering every player's entire match on every animation frame.
+const periodIndexes=new WeakMap<PlayerPaths,Map<number,PlayerPaths>>();
+function pathsForPeriod(paths:PlayerPaths,period:number){
+ let index=periodIndexes.get(paths);
+ if(!index){index=new Map();for(const [id,points] of paths)for(const point of points){
+  let players=index.get(point.period);if(!players){players=new Map();index.set(point.period,players);}
+  let samples=players.get(id);if(!samples){samples=[];players.set(id,samples);}samples.push(point);
+ }periodIndexes.set(paths,index);}
+ return index.get(period);
+}
+export function anchoredPositionsAt(cursor:Cursor,frames:Frame[],changes:VisualEvent[],paths:PlayerPaths){
  const currentFrame=frames[upperBound(frames,cursor)-1];
+ if(!currentFrame)return [];
+ const currentPaths=pathsForPeriod(paths,currentFrame.period);
  return positionsAt(cursor,frames,changes).map(p=>{
-  const points=paths.get(p.playerId);if(!points||!currentFrame)return p;
-  // Do not blend across a half reset, or admit a substitute before their event.
-  const value=ballAt(cursor,points.filter(q=>q.period===currentFrame.period));
+  const points=currentPaths?.get(p.playerId);if(!points)return p;
+  const value=ballAt(cursor,points);
   return value?{...p,...value}:p;
  });
 }

@@ -5,10 +5,10 @@ import CountUp from './components/react-bits/CountUp';
 export function Home(){
  const root=useRef<HTMLDivElement>(null);
  useGSAP(()=>{const mm=gsap.matchMedia();mm.add('(prefers-reduced-motion: no-preference)',()=>{
-  gsap.from('[data-home-enter]',{y:28,autoAlpha:0,stagger:.12,duration:1,ease:'power3.out'});
-  gsap.utils.toArray<HTMLElement>('[data-scroll-reveal]').forEach(el=>gsap.from(el,{y:45,autoAlpha:0,duration:.85,ease:'power3.out',scrollTrigger:{trigger:el,start:'top 88%',once:true}}));
-  gsap.to('.lens-orbit',{rotation:70,ease:'none',scrollTrigger:{trigger:'.home-hero',start:'top top',end:'bottom top',scrub:1.4}});
-  gsap.to('.floating-evidence',{y:-65,rotation:-4,ease:'none',scrollTrigger:{trigger:'.home-hero',start:'top top',end:'bottom top',scrub:1.2}});
+  gsap.from('[data-home-enter]',{y:28,autoAlpha:0,stagger:.1,duration:.75,ease:'power3.out'});
+  gsap.utils.toArray<HTMLElement>('[data-scroll-reveal]').forEach(el=>gsap.from(el,{y:28,autoAlpha:0,duration:.55,ease:'power3.out',scrollTrigger:{trigger:el,start:'top 88%',once:true}}));
+  gsap.to('.lens-orbit',{rotation:70,ease:'none',scrollTrigger:{trigger:'.home-hero',start:'top top',end:'bottom top',scrub:.45}});
+  gsap.to('.floating-evidence',{y:-65,rotation:-4,ease:'none',scrollTrigger:{trigger:'.home-hero',start:'top top',end:'bottom top',scrub:.6}});
   gsap.to('.process-rail',{scaleY:1,transformOrigin:'top',ease:'none',scrollTrigger:{trigger:'.process',start:'top 65%',end:'bottom 75%',scrub:1}});
  });return()=>mm.revert();},{scope:root});
  return <div className="home-page" ref={root}><header className="topbar"><div className="nav-inner"><a className="brand" href="/">matchlens<span className="brand-sub">INSIGHT STUDIO</span></a><nav aria-label="Main navigation"><a href="#perspective">The idea</a><a href="#how-it-works">How it works</a><a href="/match-room" className="nav-cta">Open match room ↗</a></nav></div></header>

@@ -13,7 +13,7 @@ export function useReducedMotion(){
  return reduced;
 }
 function ScrollSync(){useLenis(()=>ScrollTrigger.update());return null;}
-export function StudioMotion({children}:{children:ReactNode}){
+function HomeMotion({children}:{children:ReactNode}){
  const ref=useRef<LenisRef>(null),reduced=useReducedMotion();
  useEffect(()=>{
   if(reduced)return;
@@ -21,5 +21,10 @@ export function StudioMotion({children}:{children:ReactNode}){
   gsap.ticker.add(tick);gsap.ticker.lagSmoothing(0);
   return()=>{gsap.ticker.remove(tick);gsap.ticker.lagSmoothing(500,33);};
  },[reduced]);
- return <ReactLenis root ref={ref} options={{autoRaf:false,smoothWheel:!reduced,anchors:!reduced,duration:.9}}><ScrollSync/>{children}</ReactLenis>;
+ return <ReactLenis root ref={ref} options={{autoRaf:false,smoothWheel:!reduced,anchors:!reduced,duration:.45}}><ScrollSync/>{children}</ReactLenis>;
+}
+
+export function StudioMotion({children}:{children:ReactNode}){
+ // Native scrolling keeps the working replay responsive; smooth scrolling is decorative.
+ return window.location.pathname.replace(/\/+$/,'')==='/match-room'?<>{children}</>:<HomeMotion>{children}</HomeMotion>;
 }
