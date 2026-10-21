@@ -1,0 +1,11 @@
+{
+  "version": "simulation-poisson-v1",
+  "homeGoals": 1.751,
+  "awayGoals": 1.708,
+  "meanDuration": 5786.94,
+  "firstAdded": 149.58,
+  "secondAdded": 237.3599999999996,
+  "priorSeconds": 21600,
+  "redEffect": 0.15,
+  "temperature": 1.3
+}

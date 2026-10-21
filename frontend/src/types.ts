@@ -3,7 +3,9 @@ export type Match={id:string;home_team_id:string;away_team_id:string;home_team:s
 export type Player={player_id:string;team_id:string;name:string;shirt_number:number};
 export type Event={sequence:number;clock_seconds:number;period:number;type:string;team_id:string|null;player_id:string|null;outcome:string|null;details:Record<string,unknown>};
 export type TeamStats={teamId:string;shots:number;shotsOnTarget:number;xg:number;passes:number;completedPasses:number;passAccuracy:number|null;possessionEstimate:number|null;pressingSequences:number;yellowCards:number;redCards:number};
-export type State={matchId:string;atSeconds:number;throughSequence:number;period:number;periodClockSeconds:number;phase:string;statistics:{score:{home:number;away:number};possessionTeamId:string|null;teams:TeamStats[]};events:Event[];keyEvents:Event[]};
+export type ProbabilityPoint={time:number;sequence:number;home:number;draw:number;away:number};
+export type Probabilities={modelVersion:string;simulationEstimate:boolean;current:ProbabilityPoint;history:ProbabilityPoint[]};
+export type State={probabilities?:Probabilities;matchId:string;atSeconds:number;throughSequence:number;period:number;periodClockSeconds:number;phase:string;statistics:{score:{home:number;away:number};possessionTeamId:string|null;teams:TeamStats[]};events:Event[];keyEvents:Event[]};
 export type VisualReplay={purpose:'visual-only';containsFutureSamples:true;frames:Frame[];events:VisualEvent[]};
 export async function get<T>(path:string,signal?:AbortSignal):Promise<T>{
  if(new URLSearchParams(window.location.search).get('preview')==='sample'){const {sampleResponse}=await import('./sample');return sampleResponse(path) as T;}

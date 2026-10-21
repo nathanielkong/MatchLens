@@ -8,6 +8,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
+    "probability:check": "tsx src/tests/replay.probability.integration.ts",
+    "probability:evaluate": "tsx src/probability/train.ts",
     "db:migrate": "tsx src/db/migrate.ts",
     "db:seed": "tsx src/synthetic/seed.ts",
     "test": "tsx --test src/tests/*.test.ts",

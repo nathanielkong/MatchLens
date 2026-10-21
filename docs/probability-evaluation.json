@@ -1,0 +1,794 @@
+{
+  "model": {
+    "version": "simulation-poisson-v1",
+    "homeGoals": 1.751,
+    "awayGoals": 1.708,
+    "meanDuration": 5786.94,
+    "firstAdded": 149.58,
+    "secondAdded": 237.3599999999996,
+    "priorSeconds": 21600,
+    "redEffect": 0.15,
+    "temperature": 1.3
+  },
+  "createdAt": "2026-10-21T04:14:34.905Z",
+  "trainingMatches": 1000,
+  "validationMatches": 200,
+  "evaluationMatches": 300,
+  "snapshotsPerMatch": 7,
+  "cutoffs": [
+    0,
+    900,
+    1800,
+    2700,
+    3600,
+    4500,
+    5400
+  ],
+  "selection": "Validation log loss; evaluation held out from fitting and model selection.",
+  "metrics": {
+    "validation": {
+      "brier": 0.4998446260031113,
+      "logLoss": 0.8401169381127943,
+      "accuracy": 0.58,
+      "ece": 0.02606248963693508,
+      "bins": [
+        {
+          "from": 0,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.1,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.2,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.3,
+          "count": 547,
+          "confidence": 0.37503098731583084,
+          "accuracy": 0.3583180987202925
+        },
+        {
+          "from": 0.4,
+          "count": 61,
+          "confidence": 0.4560671878083682,
+          "accuracy": 0.5245901639344263
+        },
+        {
+          "from": 0.5,
+          "count": 176,
+          "confidence": 0.5686139684815962,
+          "accuracy": 0.5170454545454546
+        },
+        {
+          "from": 0.6,
+          "count": 199,
+          "confidence": 0.6442702930992515,
+          "accuracy": 0.6231155778894473
+        },
+        {
+          "from": 0.7,
+          "count": 122,
+          "confidence": 0.7408891848855623,
+          "accuracy": 0.7868852459016393
+        },
+        {
+          "from": 0.8,
+          "count": 138,
+          "confidence": 0.8440518688490056,
+          "accuracy": 0.8695652173913043
+        },
+        {
+          "from": 0.9,
+          "count": 157,
+          "confidence": 0.9697616206117867,
+          "accuracy": 0.9745222929936306
+        }
+      ]
+    },
+    "evaluation": {
+      "brier": 0.506563948240205,
+      "logLoss": 0.847959714315808,
+      "accuracy": 0.579047619047619,
+      "ece": 0.025712432896899402,
+      "bins": [
+        {
+          "from": 0,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.1,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.2,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.3,
+          "count": 817,
+          "confidence": 0.3746867653928099,
+          "accuracy": 0.35862913096695226
+        },
+        {
+          "from": 0.4,
+          "count": 84,
+          "confidence": 0.45773966317632153,
+          "accuracy": 0.5714285714285714
+        },
+        {
+          "from": 0.5,
+          "count": 238,
+          "confidence": 0.5710279758467043,
+          "accuracy": 0.5504201680672269
+        },
+        {
+          "from": 0.6,
+          "count": 311,
+          "confidence": 0.6427056380505147,
+          "accuracy": 0.6109324758842444
+        },
+        {
+          "from": 0.7,
+          "count": 190,
+          "confidence": 0.735558559498905,
+          "accuracy": 0.7736842105263158
+        },
+        {
+          "from": 0.8,
+          "count": 239,
+          "confidence": 0.8468302542350667,
+          "accuracy": 0.8200836820083682
+        },
+        {
+          "from": 0.9,
+          "count": 221,
+          "confidence": 0.967894739012486,
+          "accuracy": 0.9547511312217195
+        }
+      ]
+    },
+    "constantPrior": {
+      "brier": 0.6666240000000299,
+      "logLoss": 1.098552938382686,
+      "accuracy": 0.3466666666666667,
+      "ece": 0.004666666666674495,
+      "bins": [
+        {
+          "from": 0,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.1,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.2,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.3,
+          "count": 2100,
+          "confidence": 0.3419999999999922,
+          "accuracy": 0.3466666666666667
+        },
+        {
+          "from": 0.4,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.5,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.6,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.7,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.8,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.9,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        }
+      ]
+    },
+    "staticPoisson": {
+      "brier": 0.5143905881212271,
+      "logLoss": 0.8612203953763766,
+      "accuracy": 0.5714285714285714,
+      "ece": 0.059532516208130465,
+      "bins": [
+        {
+          "from": 0,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.1,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.2,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.3,
+          "count": 800,
+          "confidence": 0.3809594199034539,
+          "accuracy": 0.3375
+        },
+        {
+          "from": 0.4,
+          "count": 42,
+          "confidence": 0.40588486833323706,
+          "accuracy": 0.47619047619047616
+        },
+        {
+          "from": 0.5,
+          "count": 78,
+          "confidence": 0.5344001974730705,
+          "accuracy": 0.6025641025641025
+        },
+        {
+          "from": 0.6,
+          "count": 400,
+          "confidence": 0.6543474720563333,
+          "accuracy": 0.5675
+        },
+        {
+          "from": 0.7,
+          "count": 230,
+          "confidence": 0.7581362262765693,
+          "accuracy": 0.691304347826087
+        },
+        {
+          "from": 0.8,
+          "count": 197,
+          "confidence": 0.8628737484707418,
+          "accuracy": 0.7766497461928934
+        },
+        {
+          "from": 0.9,
+          "count": 353,
+          "confidence": 0.960013254029252,
+          "accuracy": 0.9178470254957507
+        }
+      ]
+    }
+  },
+  "byMinute": [
+    {
+      "minute": 0,
+      "brier": 0.6767641563392709,
+      "logLoss": 1.1156387926145113,
+      "accuracy": 0.3466666666666667,
+      "ece": 0.036457769555533114,
+      "bins": [
+        {
+          "from": 0,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.1,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.2,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.3,
+          "count": 300,
+          "confidence": 0.38312443622219977,
+          "accuracy": 0.3466666666666667
+        },
+        {
+          "from": 0.4,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.5,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.6,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.7,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.8,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.9,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        }
+      ]
+    },
+    {
+      "minute": 15,
+      "brier": 0.6334809385466117,
+      "logLoss": 1.0531750336030352,
+      "accuracy": 0.44333333333333336,
+      "ece": 0.02505368813684391,
+      "bins": [
+        {
+          "from": 0,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.1,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.2,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.3,
+          "count": 193,
+          "confidence": 0.3761182951375728,
+          "accuracy": 0.3626943005181347
+        },
+        {
+          "from": 0.4,
+          "count": 7,
+          "confidence": 0.40952610960336944,
+          "accuracy": 0.42857142857142855
+        },
+        {
+          "from": 0.5,
+          "count": 80,
+          "confidence": 0.5676956664679838,
+          "accuracy": 0.5375
+        },
+        {
+          "from": 0.6,
+          "count": 5,
+          "confidence": 0.6115872996765884,
+          "accuracy": 0.8
+        },
+        {
+          "from": 0.7,
+          "count": 13,
+          "confidence": 0.7542909658843002,
+          "accuracy": 0.8461538461538461
+        },
+        {
+          "from": 0.8,
+          "count": 2,
+          "confidence": 0.8799880079173196,
+          "accuracy": 1
+        },
+        {
+          "from": 0.9,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        }
+      ]
+    },
+    {
+      "minute": 30,
+      "brier": 0.5830272865043838,
+      "logLoss": 0.9709498571755324,
+      "accuracy": 0.5033333333333333,
+      "ece": 0.033436469518767116,
+      "bins": [
+        {
+          "from": 0,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.1,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.2,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.3,
+          "count": 145,
+          "confidence": 0.36798624594017704,
+          "accuracy": 0.3586206896551724
+        },
+        {
+          "from": 0.4,
+          "count": 4,
+          "confidence": 0.4030500333188458,
+          "accuracy": 0.25
+        },
+        {
+          "from": 0.5,
+          "count": 81,
+          "confidence": 0.578418555203743,
+          "accuracy": 0.5679012345679012
+        },
+        {
+          "from": 0.6,
+          "count": 27,
+          "confidence": 0.6097206762179623,
+          "accuracy": 0.7037037037037037
+        },
+        {
+          "from": 0.7,
+          "count": 30,
+          "confidence": 0.7799929157362361,
+          "accuracy": 0.6666666666666666
+        },
+        {
+          "from": 0.8,
+          "count": 4,
+          "confidence": 0.8489646133363189,
+          "accuracy": 1
+        },
+        {
+          "from": 0.9,
+          "count": 9,
+          "confidence": 0.9258487412589914,
+          "accuracy": 1
+        }
+      ]
+    },
+    {
+      "minute": 45,
+      "brier": 0.5415801998548836,
+      "logLoss": 0.9017355943369059,
+      "accuracy": 0.53,
+      "ece": 0.04787013597527288,
+      "bins": [
+        {
+          "from": 0,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.1,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.2,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.3,
+          "count": 111,
+          "confidence": 0.35094653789567787,
+          "accuracy": 0.3063063063063063
+        },
+        {
+          "from": 0.4,
+          "count": 1,
+          "confidence": 0.40495634535274366,
+          "accuracy": 1
+        },
+        {
+          "from": 0.5,
+          "count": 49,
+          "confidence": 0.5853669422378931,
+          "accuracy": 0.5102040816326531
+        },
+        {
+          "from": 0.6,
+          "count": 78,
+          "confidence": 0.6172764567104944,
+          "accuracy": 0.6282051282051282
+        },
+        {
+          "from": 0.7,
+          "count": 2,
+          "confidence": 0.7919932283587217,
+          "accuracy": 1
+        },
+        {
+          "from": 0.8,
+          "count": 44,
+          "confidence": 0.8220447839075519,
+          "accuracy": 0.75
+        },
+        {
+          "from": 0.9,
+          "count": 15,
+          "confidence": 0.9540312766625781,
+          "accuracy": 1
+        }
+      ]
+    },
+    {
+      "minute": 60,
+      "brier": 0.494337279184067,
+      "logLoss": 0.8298897348580978,
+      "accuracy": 0.6333333333333333,
+      "ece": 0.08445811375890763,
+      "bins": [
+        {
+          "from": 0,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.1,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.2,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.3,
+          "count": 68,
+          "confidence": 0.3864390313230493,
+          "accuracy": 0.4852941176470588
+        },
+        {
+          "from": 0.4,
+          "count": 13,
+          "confidence": 0.40685240391986915,
+          "accuracy": 0.6153846153846154
+        },
+        {
+          "from": 0.5,
+          "count": 9,
+          "confidence": 0.5865332175508002,
+          "accuracy": 0.5555555555555556
+        },
+        {
+          "from": 0.6,
+          "count": 116,
+          "confidence": 0.6411939990331652,
+          "accuracy": 0.5603448275862069
+        },
+        {
+          "from": 0.7,
+          "count": 1,
+          "confidence": 0.7002841963138241,
+          "accuracy": 1
+        },
+        {
+          "from": 0.8,
+          "count": 58,
+          "confidence": 0.8642252315505058,
+          "accuracy": 0.7931034482758621
+        },
+        {
+          "from": 0.9,
+          "count": 35,
+          "confidence": 0.9663510694050876,
+          "accuracy": 0.9142857142857143
+        }
+      ]
+    },
+    {
+      "minute": 75,
+      "brier": 0.4136346135328781,
+      "logLoss": 0.684086714110486,
+      "accuracy": 0.7066666666666667,
+      "ece": 0.06614247642929816,
+      "bins": [
+        {
+          "from": 0,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.1,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.2,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.3,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.4,
+          "count": 59,
+          "confidence": 0.47927476627120275,
+          "accuracy": 0.5932203389830508
+        },
+        {
+          "from": 0.5,
+          "count": 19,
+          "confidence": 0.5092275176294584,
+          "accuracy": 0.631578947368421
+        },
+        {
+          "from": 0.6,
+          "count": 60,
+          "confidence": 0.6784578848175155,
+          "accuracy": 0.5166666666666667
+        },
+        {
+          "from": 0.7,
+          "count": 82,
+          "confidence": 0.7168024604631673,
+          "accuracy": 0.7195121951219512
+        },
+        {
+          "from": 0.8,
+          "count": 5,
+          "confidence": 0.8895491409380487,
+          "accuracy": 0.8
+        },
+        {
+          "from": 0.9,
+          "count": 75,
+          "confidence": 0.9522381325065156,
+          "accuracy": 0.9466666666666667
+        }
+      ]
+    },
+    {
+      "minute": 90,
+      "brier": 0.20312316371936753,
+      "logLoss": 0.38024227351208606,
+      "accuracy": 0.89,
+      "ece": 0.05303887841516816,
+      "bins": [
+        {
+          "from": 0,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.1,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.2,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.3,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.4,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.5,
+          "count": 0,
+          "confidence": 0,
+          "accuracy": 0
+        },
+        {
+          "from": 0.6,
+          "count": 25,
+          "confidence": 0.6851007230850186,
+          "accuracy": 0.88
+        },
+        {
+          "from": 0.7,
+          "count": 62,
+          "confidence": 0.7336852236322249,
+          "accuracy": 0.8709677419354839
+        },
+        {
+          "from": 0.8,
+          "count": 126,
+          "confidence": 0.8451890211622943,
+          "accuracy": 0.8492063492063492
+        },
+        {
+          "from": 0.9,
+          "count": 87,
+          "confidence": 0.9887526681991143,
+          "accuracy": 0.9655172413793104
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Same synthetic generator and eight fictional teams across splits; no real-world validity.",
+    "Independent Poisson remaining goals; synthetic xG and red-card multipliers are approximations.",
+    "Snapshots from a match are correlated; no confidence intervals are claimed.",
+    "No odds, financial advice or real-football calibration.",
+    "Fulltime is excluded from evaluation to avoid trivially correct terminal predictions."
+  ]
+}

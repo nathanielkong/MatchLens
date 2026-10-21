@@ -59,6 +59,9 @@ try{
   assert.equal(visual.events[0].home_score,undefined);assert.equal(visual.events[0].details.xg,undefined);
   const rewind=await (await fetch(`${base}/${id}/state?atSeconds=3&includeFrame=false`)).json();
   assert.equal(rewind.frame,null);assert.equal(rewind.statistics.score.home,0);assert.equal(rewind.throughSequence,2);
+  assert.deepEqual(rewind.probabilities,early.probabilities);
+  assert.ok(rewind.probabilities.history.every((p:{time:number;sequence:number})=>p.time<=3&&p.sequence<=rewind.throughSequence));
+  assert.ok(goal.probabilities.current.home>early.probabilities.current.home);
   assert.equal(queryCount,3,'Repeated evidence and visual requests reuse the bounded replay cache');
   assert.equal((await fetch(`${base}/missing/state?atSeconds=0`)).status,404);
  }finally{await new Promise<void>((resolve,reject)=>server.close(e=>e?reject(e):resolve()));}

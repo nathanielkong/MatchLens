@@ -3,9 +3,9 @@ export type Point={x:number;y:number};
 export type Position=Point&{playerId:string;teamId:string};
 export type Frame={through_sequence:number;clock_seconds:number;period:number;ball:Point;positions:Position[]};
 export type VisualEvent={sequence:number;clock_seconds:number;period:number;type:string;team_id:string|null;player_id:string|null;
- x:number|null;y:number|null;end_x:number|null;end_y:number|null;details:Record<string,unknown>};
+ x:number|null;y:number|null;end_x:number|null;end_y:number|null;outcome?:string|null;details:Record<string,unknown>};
 export type Cursor={time:number;sequence?:number};
-export type BallKeyframe=Point&{clock_seconds:number;period:number;through_sequence:number;priority:number};
+export type BallKeyframe=Point&{clock_seconds:number;period:number;through_sequence:number;priority:number;restart?:boolean};
 export function upperBound<T extends {clock_seconds:number;through_sequence:number}>(items:T[],cursor:Cursor){
  let lo=0,hi=items.length;
  while(lo<hi){const mid=(lo+hi)>>>1,item=items[mid];
@@ -51,15 +51,18 @@ export function ballTravelSeconds(e:VisualEvent):number{
  return action>0?Math.min(action,flight):flight;
 }
 export function ballKeyframes(frames:Frame[],events:VisualEvent[]):BallKeyframe[]{
- const points:BallKeyframe[]=frames.map(f=>({...f.ball,clock_seconds:f.clock_seconds,period:f.period,through_sequence:f.through_sequence,priority:2}));
+ const points:BallKeyframe[]=frames.map(f=>({...f.ball,clock_seconds:f.clock_seconds,period:f.period,through_sequence:f.through_sequence,priority:0}));
  for(const e of events){
+  if(['kickoff','throw_in','goal_kick','corner','free_kick'].includes(e.type)){
+   const p=globalPoint(e.x,e.y,e);if(p)points.push({...p,clock_seconds:e.clock_seconds,period:e.period,through_sequence:e.sequence,priority:2,restart:true});continue;
+  }
   if(!['pass','shot','carry'].includes(e.type))continue;
   const start=globalPoint(e.x,e.y,e),end=globalPoint(e.end_x,e.end_y,e);
   const duration=ballTravelSeconds(e);
-  if(start&&duration>0)points.push({...start,clock_seconds:Math.max(0,e.clock_seconds-duration),period:e.period,through_sequence:e.sequence,priority:0});
-  if(end)points.push({...end,clock_seconds:e.clock_seconds,period:e.period,through_sequence:e.sequence,priority:1});
+  if(start&&duration>0)points.push({...start,clock_seconds:Math.max(0,e.clock_seconds-duration),period:e.period,through_sequence:e.sequence,priority:1});
+  if(end)points.push({...end,clock_seconds:e.clock_seconds,period:e.period,through_sequence:e.sequence,priority:2});
  }
- // A sampled ball location wins when several observations share a timestamp.
+ // Action endpoints take priority over a post-action sample (which may already reflect a save or restart).
  return points.sort((a,b)=>a.clock_seconds-b.clock_seconds||a.priority-b.priority||a.through_sequence-b.through_sequence)
   .filter((p,i,all)=>i===all.length-1||p.clock_seconds!==all[i+1].clock_seconds);
 }
@@ -68,9 +71,35 @@ export function ballAt(cursor:Cursor,points:BallKeyframe[]):Point|null{
  let lo=0,hi=points.length;
  while(lo<hi){const mid=(lo+hi)>>>1;if(points[mid].clock_seconds<=cursor.time)lo=mid+1;else hi=mid;}
  const a=points[lo-1],b=points[lo];if(!a)return null;
- const k=b&&a.period===b.period&&b.clock_seconds>a.clock_seconds?Math.min(1,(cursor.time-a.clock_seconds)/(b.clock_seconds-a.clock_seconds)):0;
+ const k=b&&!b.restart&&a.period===b.period&&b.clock_seconds>a.clock_seconds?Math.min(1,(cursor.time-a.clock_seconds)/(b.clock_seconds-a.clock_seconds)):0;
  return mix(a,b??a,k);
 }
 export function advanceClock(time:number,elapsedSeconds:number,speed:number,duration:number){
  return Math.max(0,Math.min(duration,time+Math.max(0,elapsedSeconds)*speed));
+}
+
+// Visual anchors reconcile the generator's lead-pass endpoints with its separate
+// formation samples. They do not change recorded events or feed any statistics.
+export function playerKeyframes(frames:Frame[],events:VisualEvent[]){
+ const paths=new Map<string,BallKeyframe[]>();
+ const put=(id:string,p:Point,t:number,period:number,seq:number,priority:number)=>{const list=paths.get(id)??[];list.push({...p,clock_seconds:t,period,through_sequence:seq,priority});paths.set(id,list);};
+ for(const f of frames)for(const p of f.positions)put(p.playerId,p,f.clock_seconds,f.period,f.through_sequence,0);
+ for(const e of events){
+  if(!['pass','carry','shot'].includes(e.type))continue;
+  const start=globalPoint(e.x,e.y,e),end=globalPoint(e.end_x,e.end_y,e),release=Math.max(0,e.clock_seconds-ballTravelSeconds(e));
+  if(start&&e.player_id)put(e.player_id,start,release,e.period,e.sequence,1);
+  if(end&&e.type==='carry'&&e.player_id)put(e.player_id,end,e.clock_seconds,e.period,e.sequence,1);
+  if(end&&e.type==='pass'&&e.outcome==='complete'&&typeof e.details.recipientId==='string')put(e.details.recipientId,end,e.clock_seconds,e.period,e.sequence,1);
+ }
+ for(const [id,points] of paths)paths.set(id,points.sort((a,b)=>a.clock_seconds-b.clock_seconds||a.period-b.period||a.priority-b.priority||a.through_sequence-b.through_sequence).filter((p,i,all)=>i===all.length-1||p.clock_seconds!==all[i+1].clock_seconds||p.period!==all[i+1].period));
+ return paths;
+}
+export function anchoredPositionsAt(cursor:Cursor,frames:Frame[],changes:VisualEvent[],paths:Map<string,BallKeyframe[]>){
+ const currentFrame=frames[upperBound(frames,cursor)-1];
+ return positionsAt(cursor,frames,changes).map(p=>{
+  const points=paths.get(p.playerId);if(!points||!currentFrame)return p;
+  // Do not blend across a half reset, or admit a substitute before their event.
+  const value=ballAt(cursor,points.filter(q=>q.period===currentFrame.period));
+  return value?{...p,...value}:p;
+ });
 }

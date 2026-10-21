@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {positionsAt,ballAt,ballKeyframes,ballTravelSeconds,advanceClock,type Frame,type VisualEvent} from '../src/motion.ts';
+import {positionsAt,anchoredPositionsAt,playerKeyframes,ballAt,ballKeyframes,ballTravelSeconds,advanceClock,type Frame,type VisualEvent} from '../src/motion.ts';
 const frame=(t:number,seq:number,x:number,ids=['a'],period=1):Frame=>({clock_seconds:t,through_sequence:seq,period,ball:{x,y:50},positions:ids.map(playerId=>({playerId,teamId:'home',x,y:50}))});
 const event=(type:string,time:number,seq:number,details:Record<string,unknown>={}):VisualEvent=>({type,clock_seconds:time,sequence:seq,period:1,team_id:'home',player_id:'a',x:10,y:20,end_x:40,end_y:60,details});
 test('linear motion is clamped to samples; roster changes do not appear early',()=>{
@@ -26,13 +26,13 @@ test('duplicate timestamps resolve by sequence, with no cross-half glide',()=>{
  assert.equal(positionsAt({time:15},frames)[0].x,95);
  assert.equal(positionsAt({time:5},[frame(0,1,0),frame(10,3,90,['a'],2)])[0].x,0);
 });
-test('ball uses action endpoints, converts attack direction, and prefers exact sampled positions',()=>{
+test('ball uses action endpoints, converts attack direction, and keeps an action endpoint ahead of a post-action sample',()=>{
  const pass=event('pass',10,2,{durationSeconds:4,attackDirection:-1});
  const points=ballKeyframes([frame(0,1,0),frame(20,5,50)],[pass]);
  assert.deepEqual(ballAt({time:6},points),{x:90,y:80});
  assert.deepEqual(ballAt({time:8},points),{x:75,y:60});
  assert.deepEqual(ballAt({time:10},points),{x:60,y:40});
- assert.deepEqual(ballAt({time:10},ballKeyframes([frame(10,3,42)],[pass])),{x:42,y:50});
+ assert.deepEqual(ballAt({time:10},ballKeyframes([frame(10,3,42)],[pass])),{x:60,y:40});
  assert.equal(ballAt({time:0},[]),null);
 });
 test('playback advances by elapsed time independently of refresh rate and stops at full time',()=>{
@@ -57,4 +57,21 @@ test('shots fly faster than carries; inconsistent speed is capped by the availab
  assert.equal(ballTravelSeconds({...shot,type:'carry'}),6);
  assert.equal(ballTravelSeconds({...shot,details:{durationSeconds:.5,shotSpeedKmh:75.6}}),.5);
  assert.equal(ballTravelSeconds({...shot,details:{durationSeconds:6,shotSpeedKmh:0}}),6);
+});
+
+test('a completed lead pass meets its named teammate; a failed pass does not drag that teammate to the ball',()=>{
+ const frames=[frame(0,1,10,['a','b']),frame(15,4,20,['a','b'])];
+ const pass={...event('pass',10,3,{durationSeconds:6,ballSpeedKmh:36,recipientId:'b'}),outcome:'complete'};
+ const paths=playerKeyframes(frames,[pass]);
+ const receiver=anchoredPositionsAt({time:10},frames,[],paths).find(p=>p.playerId==='b')!;
+ assert.equal(receiver.x,40);assert.equal(receiver.y,60);
+ const failed=playerKeyframes(frames,[{...pass,outcome:'incomplete'}]);
+ assert.notEqual(anchoredPositionsAt({time:10},frames,[],failed).find(p=>p.playerId==='b')!.x,40);
+});
+test('a restart is a dead-ball reposition, not a slow cross-pitch pass',()=>{
+ const shot={...event('shot',10,2,{durationSeconds:3,shotSpeedKmh:80}),x:90,y:50,end_x:100,end_y:50};
+ const kickoff={...event('kickoff',35,3),x:50,y:50};
+ const balls=ballKeyframes([frame(0,1,90)],[shot,kickoff]);
+ assert.deepEqual(ballAt({time:25},balls),{x:100,y:50});
+ assert.deepEqual(ballAt({time:35},balls),{x:50,y:50});
 });
