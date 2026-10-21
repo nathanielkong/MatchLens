@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import {foundryStatus} from './ai/foundry.js';
+import {aiRoutes} from './ai/routes.js';
 import express from 'express';
 import { database, matchRoutes } from './db/routes.js';
 
@@ -18,7 +18,7 @@ app.get('/api/health', (_req, res) => {
 });
 
 // This route exposes local readiness only; it never sends a model request or returns credentials.
-app.get('/api/ai/status', (_req,res)=>res.json(foundryStatus()));
+app.use('/api',aiRoutes(database));
 app.use('/api/matches', matchRoutes);
 app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(error instanceof Error ? error.message : 'Request failed');

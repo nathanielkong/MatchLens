@@ -32,7 +32,11 @@ try {
   await client.query('GRANT USAGE ON SCHEMA public TO matchlens_app');
   await client.query('GRANT SELECT ON teams,players,replay_matches,replay_events,replay_lineups,replay_tracking,replay_producer_feed TO matchlens_app');
   await client.query('GRANT EXECUTE ON FUNCTION replay_pressing_sequences(text,integer) TO matchlens_app');
+  if (!(await client.query('SELECT 1 FROM schema_migrations WHERE version=5')).rowCount) {
+    await client.query(await readFile(new URL('../../src/db/005-ai-runtime.sql', import.meta.url), 'utf8'));
+    await client.query('INSERT INTO schema_migrations(version) VALUES(5)');
+  }
   await client.query('COMMIT');
-  console.log('Database schema ready (version 4).');
+  console.log('Database schema ready (version 5).');
 } catch (error) { await client.query('ROLLBACK'); throw error; }
 finally { client.release(); await pool.end(); }

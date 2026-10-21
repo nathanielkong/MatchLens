@@ -1,0 +1,28 @@
+import {Router} from 'express';
+import type {Pool} from 'pg';
+import {z} from 'zod';
+import {foundryStatus} from './foundry.js';
+import {AIError,projectStatus} from './project.js';
+import {insightService} from './service.js';
+const request=z.object({throughSequence:z.number().int().min(1).max(100000),audience:z.enum(['casual','analyst']).default('casual')}).strict();
+export function aiRoutes(db:Pick<Pool,'query'>){
+ const routes=Router(),generate=insightService(db);
+ routes.get('/ai/status',async(_req,res)=>{
+  const status=process.env.AI_PROVIDER==='foundry-agent'?projectStatus():foundryStatus();
+  let limits:unknown=null;try{limits=(await db.query('SELECT ai_usage() AS limits')).rows[0].limits;}catch{/* Readiness must not break replay during migration/outages. */}
+  res.json({...status,limits});
+ });
+ routes.post('/matches/:id/insights',async(req,res)=>{
+  // Cross-origin pages cannot consume a local user's allowance through a form.
+  // Reverse proxies must strip incoming forwarded headers; trust proxy stays off.
+  const origin=req.get('origin');
+  const allowed=(process.env.AI_ALLOWED_ORIGINS??'http://localhost:5174,http://127.0.0.1:5174,http://localhost:5173,http://127.0.0.1:5173').split(',');
+  if(origin&&!allowed.includes(origin)){res.status(403).json({error:'AI_ORIGIN_DENIED'});return;}
+  if(!req.is('application/json')){res.status(415).json({error:'Use application/json'});return;}
+  const parsed=request.safeParse(req.body);
+  if(!parsed.success){res.status(400).json({error:'Provide a throughSequence and casual/analyst audience'});return;}
+  try {res.json(await generate(req.params.id,parsed.data.throughSequence,parsed.data.audience,req.ip??'unknown'));}
+  catch(e){const error=e instanceof AIError?e:new AIError('AI_UNAVAILABLE');res.status(error.httpStatus).json({error:error.code});}
+ });
+ return routes;
+}
