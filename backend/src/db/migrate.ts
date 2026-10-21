@@ -36,7 +36,11 @@ try {
     await client.query(await readFile(new URL('../../src/db/005-ai-runtime.sql', import.meta.url), 'utf8'));
     await client.query('INSERT INTO schema_migrations(version) VALUES(5)');
   }
+  if (!(await client.query('SELECT 1 FROM schema_migrations WHERE version=6')).rowCount) {
+    await client.query(await readFile(new URL('../../src/db/006-ai-daily-limit-toggle.sql', import.meta.url), 'utf8'));
+    await client.query('INSERT INTO schema_migrations(version) VALUES(6)');
+  }
   await client.query('COMMIT');
-  console.log('Database schema ready (version 5).');
+  console.log('Database schema ready (version 6).');
 } catch (error) { await client.query('ROLLBACK'); throw error; }
 finally { client.release(); await pool.end(); }
