@@ -31,3 +31,9 @@ Normal mode continues to use the Express API. If the library is unavailable, it 
 | Hosting | Azure PostgreSQL migrated | Foundry model setup, agent runtime and Container Apps deployment |
 
 Next backend milestone: implement the first evidence-linked insight with orchestration, analysis, narrative, verification and bounded rewrite handling. No AI calls or paid cloud deployment were introduced by this design update.
+
+## Animated feature illustrations
+
+The home-page cards now have bounded random player movement, smoothly changing decorative graph paths, and a floating quotation mark with breathing text lines. These illustrations are unrelated to match data or probability calculations and are hidden from assistive technology. Animation pauses outside the viewport and in background tabs; reduced-motion users see static illustrations. Scoped cleanup stops all animation when components unmount.
+
+A local ignored `backend/.env.foundry` file is prepared for the Azure OpenAI endpoint, deployment name and API key. It is private (0600), defaults to AI disabled, and is not loaded by the current API. No Foundry client, AI requests or new cloud resources are introduced by this animation update. The next backend work is the evidence contract and orchestrator/analysis/narrative/verifier pipeline, with an explicit client configuration and bounded model usage.
