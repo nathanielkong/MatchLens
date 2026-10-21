@@ -1,8 +1,9 @@
 import type {Pool} from 'pg';
 import type {ReplayEvent} from '../analytics/statistics.js';
+import {runInsightWorkflow} from './workflow.js';
 import {postgresBudget} from './budget.js';
 import {AIError,ProjectAgentClient,projectConfig} from './project.js';
-import {evidencePacket,evidencePrompt,evidenceVersion,verifySelection,type Audience,type EvidenceMatch} from './evidence.js';
+import {evidencePacket,type Audience,type EvidenceMatch} from './evidence.js';
 export function insightService(db:Pick<Pool,'query'>){
  let agent:ProjectAgentClient|undefined;
  return async(matchId:string,cutoff:number,audience:Audience,clientId:string)=>{
@@ -18,6 +19,6 @@ export function insightService(db:Pick<Pool,'query'>){
    FROM replay_events WHERE match_id=$1 AND sequence<=$2 ORDER BY sequence`,[matchId,cutoff])).rows;
   const packet=evidencePacket(match,events,cutoff,audience);
   agent??=new ProjectAgentClient(config,postgresBudget(db));
-  return agent.run(evidencePrompt(packet),clientId,raw=>verifySelection(raw,packet),evidenceVersion);
+  return runInsightWorkflow(agent,packet,clientId);
  };
 }

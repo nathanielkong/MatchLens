@@ -55,7 +55,7 @@ export function ProbabilityIllustration(){
    const shift=()=>{
     if(!motion.alive())return;
     const next=previous.map(y=>gsap.utils.clamp(12,83,y+gsap.utils.random(-25,25))),state={progress:0};
-    const tween=gsap.to(state,{progress:1,duration:gsap.utils.random(2.1,3.6),ease:'sine.inOut',paused:true,
+    const tween=gsap.to(state,{progress:1,duration:gsap.utils.random(.65,1.05),ease:'sine.inOut',paused:true,
      onUpdate:()=>{const now=performance.now();if(now-lastDraw<1000/30&&state.progress<1)return;lastDraw=now;path.setAttribute('d',pathFor(previous.map((y,i)=>y+(next[i]-y)*state.progress)));},
      onComplete:()=>{previous=next;motion.forget(tween);shift();}});
     motion.track(tween);

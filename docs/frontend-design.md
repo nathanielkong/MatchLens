@@ -45,3 +45,11 @@ Player dots use composited x/y transforms instead of animated left/top layout co
 The canvas skips repainting when the cursor and dimensions are unchanged, suspends drawing outside the viewport or in hidden documents, and caps pixel ratio at 2. Pass geometry is computed once, nearby pass flights are found by binary search, and player keyframes are indexed per half once. The control loop avoids writing the same slider value again.
 
 The repeatable CPU-only `frontend/scripts/benchmark-motion.ts` uses 750 generated frames, 22 players and 10,000 lookups. Median cost per lookup was 0.0903 ms before indexing and 0.0091 ms after in a local run. This microbenchmark does not measure browser FPS or establish a whole-page speedup. Existing timing, roster and evidence-cutoff checks remain applicable; an added regression checks cached paths across half boundaries and rewinds.
+
+## Hero and motion revision (21 October 2026)
+
+The home hero uses a charcoal broadcast instrument with a drawn pitch, dashed action route, orbit markers, floating evidence tags and a compact faster probability illustration. It is labelled illustrative rather than live match data. CSS animations pause offscreen and in background tabs. Probability illustration morphs now take 0.65–1.05 seconds, with the existing 30 Hz drawing ceiling.
+
+Dataset figures use large tabular number reels counting sequentially from zero on entering view, then stopping at 16/8/3. Native Web Animations move one clipped strip per counter; reduced-motion renders the final value immediately. This fixes the old inherited span font size that made two figures tiny.
+
+Native scrolling replaces the Lenis wrapper and ticker on the home page as well as the match room. Removed hero scroll scrubbing, shortened reveal motion and removed home-header backdrop blur reduce rendering work and input smoothing. No whole-page FPS guarantee is claimed.
