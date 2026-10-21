@@ -48,4 +48,12 @@ A normal uncached summary uses two model attempts; a rewrite may need two more. 
 
 The match room Generate summary button pauses playback. Scrolling, page loads, pitch animation and probability updates never call a model. Rewinding hides summaries based on later evidence. The public sample never calls the model. The browser timeout accommodates the bounded multi-stage workflow; individual model requests retain their configured timeout.
 
-Still pending: arbitrary grounded Q&A, turning-point detection/evaluation against hidden references, producer-feed persistence/exports, richer analysis tools and production deployment/authentication.
+Still pending: richer Q&A beyond the computed fact catalogue, turning-point detection/evaluation against hidden references, producer-feed persistence/exports, richer analysis tools and production deployment/authentication.
+
+## Grounded match questions
+
+`POST /api/matches/:id/questions` adds a trimmed 5–300 character `question` to the summary request fields. Questions are independent, use only the selected match prefix and have no conversation memory. A routing call selects up to three existing fact IDs, or returns an empty list. Empty selections produce a fixed insufficient-evidence response, without narrative/review calls. Unknown or duplicate IDs and extra output fields are rejected. Selected facts feed the existing narrative/review workflow; both roles receive the question as untrusted, JSON-quoted data, and the reviewer also checks whether the answer addresses it.
+
+Supported topics: score, shots (and synthetic xG in Analyst mode), passing, grouped pressing, red cards and latest goal. Future results, tactical causes, probabilities and period/player comparisons are outside this first version. The model-based router and reviewer remain fallible; original facts stay visible. The prompt uses bounded input and backend-validated evidence following [OpenAI safety guidance](https://developers.openai.com/api/docs/guides/safety-best-practices#constrain-user-input-and-limit-output-tokens).
+
+A fresh supported question normally uses three model calls, up to five with one rewrite/review cycle; an unsupported question uses one routing call. Each stage uses the existing accounting/cache and per-stage minute gates. The UI pauses playback and hides answers after rewinding before their evidence cutoff. The question and source packet are part of cache input; summary and question contracts are separated.

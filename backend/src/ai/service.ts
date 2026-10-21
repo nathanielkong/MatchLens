@@ -1,12 +1,13 @@
 import type {Pool} from 'pg';
 import type {ReplayEvent} from '../analytics/statistics.js';
+import {runQuestionWorkflow} from './questions.js';
 import {runInsightWorkflow} from './workflow.js';
 import {postgresBudget} from './budget.js';
 import {AIError,ProjectAgentClient,projectConfig} from './project.js';
 import {evidencePacket,type Audience,type EvidenceMatch} from './evidence.js';
 export function insightService(db:Pick<Pool,'query'>){
  let agent:ProjectAgentClient|undefined;
- return async(matchId:string,cutoff:number,audience:Audience,clientId:string)=>{
+ return async(matchId:string,cutoff:number,audience:Audience,clientId:string,question?:string)=>{
   if(process.env.AI_PROVIDER!=='foundry-agent')throw new AIError('AI_NOT_CONFIGURED');
   const config=projectConfig();if(!config.enabled)throw new AIError('AI_DISABLED');
   const match=(await db.query<EvidenceMatch>(`SELECT m.id,m.home_team_id,m.away_team_id,h.name AS home_team,a.name AS away_team
@@ -19,6 +20,6 @@ export function insightService(db:Pick<Pool,'query'>){
    FROM replay_events WHERE match_id=$1 AND sequence<=$2 ORDER BY sequence`,[matchId,cutoff])).rows;
   const packet=evidencePacket(match,events,cutoff,audience);
   agent??=new ProjectAgentClient(config,postgresBudget(db));
-  return runInsightWorkflow(agent,packet,clientId);
+  return question?runQuestionWorkflow(agent,packet,clientId,question):runInsightWorkflow(agent,packet,clientId);
  };
 }
