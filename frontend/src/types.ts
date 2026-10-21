@@ -6,8 +6,10 @@ export type TeamStats={teamId:string;shots:number;shotsOnTarget:number;xg:number
 export type State={matchId:string;atSeconds:number;throughSequence:number;period:number;periodClockSeconds:number;phase:string;statistics:{score:{home:number;away:number};possessionTeamId:string|null;teams:TeamStats[]};events:Event[];keyEvents:Event[]};
 export type VisualReplay={purpose:'visual-only';containsFutureSamples:true;frames:Frame[];events:VisualEvent[]};
 export async function get<T>(path:string,signal?:AbortSignal):Promise<T>{
+ if(new URLSearchParams(window.location.search).get('preview')==='sample'){const {sampleResponse}=await import('./sample');return sampleResponse(path) as T;}
  for(let attempt=0;;attempt++){
-  const res=await fetch(`/api${path}`,{signal});
+  const timeout=AbortSignal.timeout(8000);
+  const res=await fetch(`/api${path}`,{signal:signal?AbortSignal.any([signal,timeout]):timeout});
   if([502,503].includes(res.status)&&attempt<2){await new Promise(resolve=>setTimeout(resolve,300*(attempt+1)));continue;}
   if(!res.ok)throw new Error(`Unable to load match data (${res.status}). Please retry.`);
   return res.json();
