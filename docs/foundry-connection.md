@@ -48,7 +48,7 @@ A normal uncached summary uses two model attempts; a rewrite may need two more. 
 
 The match room Generate summary button pauses playback. Scrolling, page loads, pitch animation and probability updates never call a model. Rewinding hides summaries based on later evidence. The public sample never calls the model. The browser timeout accommodates the bounded multi-stage workflow; individual model requests retain their configured timeout.
 
-Still pending: richer Q&A beyond the computed fact catalogue, producer-feed persistence/exports, richer analysis tools and production deployment/authentication.
+Still pending: richer Q&A beyond the computed fact catalogue, richer analysis tools and production deployment/authentication.
 
 ## Grounded match questions
 
@@ -59,3 +59,5 @@ Supported topics: score, shots (and synthetic xG in Analyst mode), passing, grou
 A fresh supported question normally uses three model calls, up to five with one rewrite/review cycle; an unsupported question uses one routing call. Each stage uses the existing accounting/cache and per-stage minute gates. The UI pauses playback and hides answers after rewinding before their evidence cutoff. The question and source packet are part of cache input; summary and question contracts are separated.
 
 Turning-point candidates are now available in the match room and latest-candidate facts are available to summaries. See [detection and reference evaluation](turning-points.md) for the limited event-anchor evaluation; this does not evaluate generated explanations.
+
+The producer desk now generates and persists reviewed talking points and short recap snapshots. The saved-feed and Markdown/JSON export APIs make no model calls; see [producer desk](producer-desk.md).

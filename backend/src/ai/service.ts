@@ -7,7 +7,7 @@ import {AIError,ProjectAgentClient,projectConfig} from './project.js';
 import {evidencePacket,type Audience,type EvidenceMatch} from './evidence.js';
 export function insightService(db:Pick<Pool,'query'>){
  let agent:ProjectAgentClient|undefined;
- return async(matchId:string,cutoff:number,audience:Audience,clientId:string,question?:string)=>{
+ return async(matchId:string,cutoff:number,audience:Audience,clientId:string,question?:string,purpose:'talking_point'|'recap'|'summary'='summary')=>{
   if(process.env.AI_PROVIDER!=='foundry-agent')throw new AIError('AI_NOT_CONFIGURED');
   const config=projectConfig();if(!config.enabled)throw new AIError('AI_DISABLED');
   const match=(await db.query<EvidenceMatch>(`SELECT m.id,m.home_team_id,m.away_team_id,h.name AS home_team,a.name AS away_team
@@ -20,6 +20,11 @@ export function insightService(db:Pick<Pool,'query'>){
    FROM replay_events WHERE match_id=$1 AND sequence<=$2 ORDER BY sequence`,[matchId,cutoff])).rows;
   const packet=evidencePacket(match,events,cutoff,audience);
   agent??=new ProjectAgentClient(config,postgresBudget(db));
-  return question?runQuestionWorkflow(agent,packet,clientId,question):runInsightWorkflow(agent,packet,clientId);
+  const answer=question?await runQuestionWorkflow(agent,packet,clientId,question):await runInsightWorkflow(agent,packet,clientId,undefined,purpose);
+  if(purpose==='summary')return answer;
+  const kind=purpose==='talking_point'?'talking_point':events.at(-1)?.type==='fulltime'?'fulltime':events.at(-1)?.type==='halftime'?'halftime':'catchup';
+  const document={...answer.result,label:kind==='talking_point'?'Producer talking points':kind==='fulltime'?'Full-time recap':kind==='halftime'?'Half-time recap':'Replay recap',publicationKind:kind};
+  const saved=await db.query('SELECT publish_producer_document($1,$2) AS id',[JSON.stringify(document),kind]);
+  return {...answer,result:document,publishedId:String(saved.rows[0].id)};
  };
 }

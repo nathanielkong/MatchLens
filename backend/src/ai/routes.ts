@@ -13,7 +13,7 @@ export function aiRoutes(db:Pick<Pool,'query'>){
   let limits:unknown=null;try{limits=(await db.query('SELECT ai_usage() AS limits')).rows[0].limits;}catch{/* Readiness must not break replay during migration/outages. */}
   res.json({...status,limits});
  });
- routes.post(['/matches/:id/insights','/matches/:id/questions'],async(req,res)=>{
+ routes.post(['/matches/:id/insights','/matches/:id/questions','/matches/:id/producer'],async(req,res)=>{
   // Cross-origin pages cannot consume a local user's allowance through a form.
   // Reverse proxies must strip incoming forwarded headers; trust proxy stays off.
   const origin=req.get('origin');
@@ -21,10 +21,11 @@ export function aiRoutes(db:Pick<Pool,'query'>){
   if(origin&&!allowed.includes(origin)){res.status(403).json({error:'AI_ORIGIN_DENIED'});return;}
   if(!req.is('application/json')){res.status(415).json({error:'Use application/json'});return;}
   const isQuestion=req.path.endsWith('/questions');
-  const parsed=(isQuestion?request.extend({question:questionSchema}):request).safeParse(req.body);
+  const isProducer=req.path.endsWith('/producer');
+  const parsed=(isQuestion?request.extend({question:questionSchema}):isProducer?request.extend({output:z.enum(['talking_point','recap'])}):request).safeParse(req.body);
   if(!parsed.success){res.status(400).json({error:'Provide a throughSequence, casual/analyst audience and a question of 5–300 characters when asking Q&A'});return;}
   const matchId=req.params.id;if(typeof matchId!=='string'){res.status(400).json({error:'Invalid match ID'});return;}
-  try {res.json(await generate(matchId,parsed.data.throughSequence,parsed.data.audience,req.ip??'unknown','question' in parsed.data?parsed.data.question as string:undefined));}
+  try {res.json(await generate(matchId,parsed.data.throughSequence,parsed.data.audience,req.ip??'unknown','question' in parsed.data?parsed.data.question as string:undefined,'output' in parsed.data?parsed.data.output as 'talking_point'|'recap':'summary'));}
   catch(e){const error=e instanceof AIError?e:new AIError('AI_UNAVAILABLE');res.status(error.httpStatus).json({error:error.code});}
  });
  return routes;

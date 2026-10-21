@@ -5,7 +5,7 @@ import {AIError} from './project.js';
 export type Audience='casual'|'analyst';
 export type EvidenceMatch={id:string;home_team_id:string;away_team_id:string;home_team:string;away_team:string};
 export type Fact={id:string;text:string;evidenceSequences:number[];prefix:{fromSequence:number;throughSequence:number}};
-export const evidenceVersion='evidence-catalog-v2';
+export const evidenceVersion='evidence-catalog-v3';
 export function evidencePacket(match:EvidenceMatch,source:ReplayEvent[],cutoff:number,audience:Audience){
  const events=source.filter(e=>e.sequence<=cutoff).sort((a,b)=>a.sequence-b.sequence);
  const last=events.at(-1);if(!last)throw new AIError('AI_NO_EVIDENCE',400);
@@ -13,7 +13,7 @@ export function evidencePacket(match:EvidenceMatch,source:ReplayEvent[],cutoff:n
  const [home,away]=stats.teams,fromSequence=events[0].sequence,throughSequence=last.sequence;
  const facts:Fact[]=[];
  const add=(id:string,text:string,relevant:ReplayEvent[])=>facts.push({id,text,evidenceSequences:relevant.slice(-6).map(e=>e.sequence),prefix:{fromSequence,throughSequence}});
- add('score',`${match.home_team} ${stats.score.home}–${stats.score.away} ${match.away_team}. This is the score at the selected replay moment, not a prediction of the final result.`,[last]);
+ add('score',`${match.home_team} ${stats.score.home}–${stats.score.away} ${match.away_team}. ${last.type==='fulltime'?'This is the recorded full-time result.':last.type==='halftime'?'This is the recorded half-time score; the final result remains unknown.':'This is the score at the selected replay moment, not a prediction of the final result.'}`, [last]);
  const shots=events.filter(e=>e.type==='shot');
  if(shots.length){
   const comparison=home.shots===away.shots?'Both teams have taken the same number of shots.':`${home.shots>away.shots?match.home_team:match.away_team} has produced more attempts so far; that alone does not establish control of the match.`;

@@ -1,3 +1,4 @@
+import {parseProducerDocument,recapMarkdown} from '../producer/documents.js';
 import { Router } from 'express';
 import { z } from 'zod';
 import {stateRoutes} from './state.js';
@@ -47,8 +48,19 @@ matchRoutes.get('/:id/producer-feed',async(req,res)=>{
  if(!parsed.success){res.status(400).json({error:'Provide a valid throughSequence'});return;}
  if(!(await database.query('SELECT 1 FROM replay_matches WHERE id=$1',[req.params.id])).rowCount){res.status(404).json({error:'Match not found'});return;}
  const {throughSequence}=parsed.data;
- const {rows}=await database.query('SELECT * FROM replay_producer_feed WHERE match_id=$1 AND through_sequence<=$2 ORDER BY through_sequence,id',[req.params.id,throughSequence]);
- res.json({throughSequence,insights:rows});
+ const {rows}=await database.query('SELECT * FROM replay_producer_feed WHERE match_id=$1 AND through_sequence<=$2 ORDER BY through_sequence DESC,id DESC LIMIT 50',[req.params.id,throughSequence]);
+ res.json({throughSequence,insights:rows.map(row=>({...row,document:parseProducerDocument(row.body)}))});
 });
 
+matchRoutes.get('/:id/recap-export',async(req,res)=>{
+ const parsed=z.object({throughSequence:z.coerce.number().int().min(0).max(100000),audience:z.enum(['casual','analyst']).default('casual'),format:z.enum(['markdown','json']).default('markdown')}).safeParse(req.query);
+ if(!parsed.success){res.status(400).json({error:'Provide a valid cutoff, audience and export format'});return;}
+ const {throughSequence,audience,format}=parsed.data;
+ const {rows}=await database.query("SELECT body FROM replay_producer_feed WHERE match_id=$1 AND through_sequence<=$2 AND audience=$3 AND kind IN ('catchup','halftime','fulltime') ORDER BY through_sequence DESC,id DESC",[req.params.id,throughSequence,audience]);
+ const document=rows.map(row=>parseProducerDocument(row.body)).find(Boolean);
+ if(!document){res.status(404).json({error:'Generate a reviewed recap at or before this moment first.'});return;}
+ res.setHeader('Content-Disposition',`attachment; filename="matchlens-recap.${format==='json'?'json':'md'}"`);
+ if(format==='json')res.json({document,notice:'Synthetic data. Model-reviewed draft; human producer review is still needed.'});
+ else res.type('text/markdown').send(recapMarkdown(document));
+});
 matchRoutes.use(stateRoutes(database));
