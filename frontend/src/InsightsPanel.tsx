@@ -40,9 +40,9 @@ export function InsightsPanel({matchId,state,onSeek,onPause,preview}:{matchId:st
     <label htmlFor="match-question">Ask about this moment</label>
     <p>Try “Who is leading?” or “How does passing compare?” Answers use evidence through the selected minute.</p>
     <div><input id="match-question" value={question} onChange={e=>setQuestion(e.target.value)} minLength={5} maxLength={300} placeholder="What do the shots tell us so far?" disabled={preview||busy} required/><button type="submit" disabled={preview||!ready||busy||!sequence||question.trim().length<5}>Ask MatchLens ↗</button></div>
-    <small>Score, shots, passing, pressing, red cards and latest goal · Each question is independent.</small>
+    <small>Score, shots, passing, pressing, red cards, latest goal and detected shifts · Each question is independent.</small>
    </form>
-   {visible?.result.verification.trace&&<div className="agent-trace" aria-label="Agent workflow">{visible.result.verification.trace.map((step,i)=><span key={i}><b>{step.role}</b> {step.status}</span>)}</div>}<p className="method-note">Fictional match data. Schema, evidence-ID and numeric checks run alongside a separate model review. A model verifier can miss errors; inspect the original evidence. Answers cover the available fact catalogue. Tactical causes, forecasts, turning-point evaluation and producer exports are not available.</p>
+   {visible?.result.verification.trace&&<div className="agent-trace" aria-label="Agent workflow">{visible.result.verification.trace.map((step,i)=><span key={i}><b>{step.role}</b> {step.status}</span>)}</div>}<p className="method-note">Fictional match data. Schema, evidence-ID and numeric checks run alongside a separate model review. A model verifier can miss errors; inspect the original evidence. Answers cover the available fact catalogue. Model-based turning points are evaluated against event anchors. Tactical causes, forecasts and producer exports are not available.</p>
   </div>
  </section>;
 }

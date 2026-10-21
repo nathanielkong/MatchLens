@@ -1,0 +1,476 @@
+{
+  "detector": {
+    "version": "probability-shift-v1",
+    "threshold": 0.08,
+    "definition": "A shot or red card changing any final-result probability by at least 8 percentage points at the same match clock."
+  },
+  "probabilityModel": "simulation-poisson-v1",
+  "referenceVersion": "anchors-v1",
+  "matches": 16,
+  "eligibleReferences": 54,
+  "excludedTacticalCandidates": 53,
+  "protocol": {
+    "thresholdChosenBeforeEvaluation": true,
+    "thresholdTunedOnReferences": false,
+    "matching": "Exact event sequence and kind, one-to-one within each match; references filtered at the same cutoff.",
+    "scope": "All showcase matches, including matches with zero anchors. Each cutoff is scored separately; repeated prefixes are not independent samples.",
+    "referenceLimit": "Goal/card anchors are derived from the same simulated event records, not independent human judgements of importance. A non-goal shot can be a plausible model shift but counts as unmatched in this limited anchor evaluation.",
+    "baselineLimit": "The all-goals/cards baseline matches the reference construction by definition; it is a coverage sanity check, not a competitive AI baseline.",
+    "notEvaluated": [
+      "Tactical causality",
+      "Human turning-point agreement",
+      "AI prose correctness",
+      "Real-football generalisation"
+    ]
+  },
+  "results": [
+    {
+      "cutoff": 0,
+      "predictions": 0,
+      "references": 0,
+      "truePositives": 0,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": null,
+      "recall": null,
+      "f1": null,
+      "zeroAnchorMatches": 16,
+      "emptyMatchesWithPredictions": 0,
+      "macroRecall": null,
+      "byKind": {
+        "goal": {
+          "predictions": 0,
+          "references": 0,
+          "truePositives": 0,
+          "falsePositives": 0,
+          "falseNegatives": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "red_card": {
+          "predictions": 0,
+          "references": 0,
+          "truePositives": 0,
+          "falsePositives": 0,
+          "falseNegatives": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "shot": {
+          "predictions": 0,
+          "references": 0,
+          "truePositives": 0,
+          "falsePositives": 0,
+          "falseNegatives": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        }
+      },
+      "eventAnchorBaseline": {
+        "predictions": 0,
+        "references": 0,
+        "truePositives": 0,
+        "falsePositives": 0,
+        "falseNegatives": 0,
+        "precision": null,
+        "recall": null,
+        "f1": null
+      }
+    },
+    {
+      "cutoff": 900,
+      "predictions": 11,
+      "references": 11,
+      "truePositives": 11,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1,
+      "zeroAnchorMatches": 11,
+      "emptyMatchesWithPredictions": 0,
+      "macroRecall": 1,
+      "byKind": {
+        "goal": {
+          "predictions": 11,
+          "references": 11,
+          "truePositives": 11,
+          "falsePositives": 0,
+          "falseNegatives": 0,
+          "precision": 1,
+          "recall": 1,
+          "f1": 1
+        },
+        "red_card": {
+          "predictions": 0,
+          "references": 0,
+          "truePositives": 0,
+          "falsePositives": 0,
+          "falseNegatives": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "shot": {
+          "predictions": 0,
+          "references": 0,
+          "truePositives": 0,
+          "falsePositives": 0,
+          "falseNegatives": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        }
+      },
+      "eventAnchorBaseline": {
+        "predictions": 11,
+        "references": 11,
+        "truePositives": 11,
+        "falsePositives": 0,
+        "falseNegatives": 0,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1
+      }
+    },
+    {
+      "cutoff": 1800,
+      "predictions": 20,
+      "references": 20,
+      "truePositives": 20,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1,
+      "zeroAnchorMatches": 5,
+      "emptyMatchesWithPredictions": 0,
+      "macroRecall": 1,
+      "byKind": {
+        "goal": {
+          "predictions": 20,
+          "references": 20,
+          "truePositives": 20,
+          "falsePositives": 0,
+          "falseNegatives": 0,
+          "precision": 1,
+          "recall": 1,
+          "f1": 1
+        },
+        "red_card": {
+          "predictions": 0,
+          "references": 0,
+          "truePositives": 0,
+          "falsePositives": 0,
+          "falseNegatives": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "shot": {
+          "predictions": 0,
+          "references": 0,
+          "truePositives": 0,
+          "falsePositives": 0,
+          "falseNegatives": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        }
+      },
+      "eventAnchorBaseline": {
+        "predictions": 20,
+        "references": 20,
+        "truePositives": 20,
+        "falsePositives": 0,
+        "falseNegatives": 0,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1
+      }
+    },
+    {
+      "cutoff": 2700,
+      "predictions": 27,
+      "references": 29,
+      "truePositives": 27,
+      "falsePositives": 0,
+      "falseNegatives": 2,
+      "precision": 1,
+      "recall": 0.9310344827586207,
+      "f1": 0.9642857142857143,
+      "zeroAnchorMatches": 2,
+      "emptyMatchesWithPredictions": 0,
+      "macroRecall": 0.9107142857142857,
+      "byKind": {
+        "goal": {
+          "predictions": 27,
+          "references": 28,
+          "truePositives": 27,
+          "falsePositives": 0,
+          "falseNegatives": 1,
+          "precision": 1,
+          "recall": 0.9642857142857143,
+          "f1": 0.9818181818181818
+        },
+        "red_card": {
+          "predictions": 0,
+          "references": 1,
+          "truePositives": 0,
+          "falsePositives": 0,
+          "falseNegatives": 1,
+          "precision": null,
+          "recall": 0,
+          "f1": 0
+        },
+        "shot": {
+          "predictions": 0,
+          "references": 0,
+          "truePositives": 0,
+          "falsePositives": 0,
+          "falseNegatives": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        }
+      },
+      "eventAnchorBaseline": {
+        "predictions": 29,
+        "references": 29,
+        "truePositives": 29,
+        "falsePositives": 0,
+        "falseNegatives": 0,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1
+      }
+    },
+    {
+      "cutoff": 3600,
+      "predictions": 31,
+      "references": 34,
+      "truePositives": 31,
+      "falsePositives": 0,
+      "falseNegatives": 3,
+      "precision": 1,
+      "recall": 0.9117647058823529,
+      "f1": 0.9538461538461539,
+      "zeroAnchorMatches": 1,
+      "emptyMatchesWithPredictions": 0,
+      "macroRecall": 0.9366666666666668,
+      "byKind": {
+        "goal": {
+          "predictions": 31,
+          "references": 32,
+          "truePositives": 31,
+          "falsePositives": 0,
+          "falseNegatives": 1,
+          "precision": 1,
+          "recall": 0.96875,
+          "f1": 0.9841269841269841
+        },
+        "red_card": {
+          "predictions": 0,
+          "references": 2,
+          "truePositives": 0,
+          "falsePositives": 0,
+          "falseNegatives": 2,
+          "precision": null,
+          "recall": 0,
+          "f1": 0
+        },
+        "shot": {
+          "predictions": 0,
+          "references": 0,
+          "truePositives": 0,
+          "falsePositives": 0,
+          "falseNegatives": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        }
+      },
+      "eventAnchorBaseline": {
+        "predictions": 34,
+        "references": 34,
+        "truePositives": 34,
+        "falsePositives": 0,
+        "falseNegatives": 0,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1
+      }
+    },
+    {
+      "cutoff": 4500,
+      "predictions": 36,
+      "references": 41,
+      "truePositives": 36,
+      "falsePositives": 0,
+      "falseNegatives": 5,
+      "precision": 1,
+      "recall": 0.8780487804878049,
+      "f1": 0.935064935064935,
+      "zeroAnchorMatches": 1,
+      "emptyMatchesWithPredictions": 0,
+      "macroRecall": 0.9333333333333332,
+      "byKind": {
+        "goal": {
+          "predictions": 36,
+          "references": 38,
+          "truePositives": 36,
+          "falsePositives": 0,
+          "falseNegatives": 2,
+          "precision": 1,
+          "recall": 0.9473684210526315,
+          "f1": 0.972972972972973
+        },
+        "red_card": {
+          "predictions": 0,
+          "references": 3,
+          "truePositives": 0,
+          "falsePositives": 0,
+          "falseNegatives": 3,
+          "precision": null,
+          "recall": 0,
+          "f1": 0
+        },
+        "shot": {
+          "predictions": 0,
+          "references": 0,
+          "truePositives": 0,
+          "falsePositives": 0,
+          "falseNegatives": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        }
+      },
+      "eventAnchorBaseline": {
+        "predictions": 41,
+        "references": 41,
+        "truePositives": 41,
+        "falsePositives": 0,
+        "falseNegatives": 0,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1
+      }
+    },
+    {
+      "cutoff": 5400,
+      "predictions": 42,
+      "references": 48,
+      "truePositives": 42,
+      "falsePositives": 0,
+      "falseNegatives": 6,
+      "precision": 1,
+      "recall": 0.875,
+      "f1": 0.9333333333333333,
+      "zeroAnchorMatches": 1,
+      "emptyMatchesWithPredictions": 0,
+      "macroRecall": 0.9311111111111111,
+      "byKind": {
+        "goal": {
+          "predictions": 42,
+          "references": 45,
+          "truePositives": 42,
+          "falsePositives": 0,
+          "falseNegatives": 3,
+          "precision": 1,
+          "recall": 0.9333333333333333,
+          "f1": 0.9655172413793104
+        },
+        "red_card": {
+          "predictions": 0,
+          "references": 3,
+          "truePositives": 0,
+          "falsePositives": 0,
+          "falseNegatives": 3,
+          "precision": null,
+          "recall": 0,
+          "f1": 0
+        },
+        "shot": {
+          "predictions": 0,
+          "references": 0,
+          "truePositives": 0,
+          "falsePositives": 0,
+          "falseNegatives": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        }
+      },
+      "eventAnchorBaseline": {
+        "predictions": 48,
+        "references": 48,
+        "truePositives": 48,
+        "falsePositives": 0,
+        "falseNegatives": 0,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1
+      }
+    },
+    {
+      "cutoff": "fulltime",
+      "predictions": 48,
+      "references": 54,
+      "truePositives": 48,
+      "falsePositives": 0,
+      "falseNegatives": 6,
+      "precision": 1,
+      "recall": 0.8888888888888888,
+      "f1": 0.9411764705882353,
+      "zeroAnchorMatches": 1,
+      "emptyMatchesWithPredictions": 0,
+      "macroRecall": 0.9311111111111111,
+      "byKind": {
+        "goal": {
+          "predictions": 48,
+          "references": 51,
+          "truePositives": 48,
+          "falsePositives": 0,
+          "falseNegatives": 3,
+          "precision": 1,
+          "recall": 0.9411764705882353,
+          "f1": 0.9696969696969697
+        },
+        "red_card": {
+          "predictions": 0,
+          "references": 3,
+          "truePositives": 0,
+          "falsePositives": 0,
+          "falseNegatives": 3,
+          "precision": null,
+          "recall": 0,
+          "f1": 0
+        },
+        "shot": {
+          "predictions": 0,
+          "references": 0,
+          "truePositives": 0,
+          "falsePositives": 0,
+          "falseNegatives": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        }
+      },
+      "eventAnchorBaseline": {
+        "predictions": 54,
+        "references": 54,
+        "truePositives": 54,
+        "falsePositives": 0,
+        "falseNegatives": 0,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1
+      }
+    }
+  ]
+}

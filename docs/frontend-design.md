@@ -53,3 +53,9 @@ The home hero uses a charcoal broadcast instrument with a drawn pitch, dashed ac
 Dataset figures use large tabular number reels counting sequentially from zero on entering view, then stopping at 16/8/3. Native Web Animations move one clipped strip per counter; reduced-motion renders the final value immediately. This fixes the old inherited span font size that made two figures tiny.
 
 Native scrolling replaces the Lenis wrapper and ticker on the home page as well as the match room. Removed hero scroll scrubbing, shortened reveal motion and removed home-header backdrop blur reduce rendering work and input smoothing. No whole-page FPS guarantee is claimed.
+
+## Current status update: grounded questions and turning points
+
+The hero now contains only the animated logo and orbit rings on the page background. Counters wait until the user scrolls and at least 75% of the number strip is inside a viewport inset by 15% at the bottom; they start after a short delay and stop at 16/8/3. Native scrolling remains, with short staggered reveals and gentle logo scroll movement; reduced-motion avoids these effects. This supersedes the earlier charcoal hero and smooth-scroll description.
+
+The connected match room now includes narrative summaries, bounded grounded Q&A and a model-based turning-point panel. Turning points require an 8-percentage-point same-clock change after a shot or dismissal, show before/after probabilities, and link to the event. Only observed candidates appear, with the latest six shown. The detector makes no language-model calls. Hidden event-anchor evaluation and limitations are documented in turning-points.md. Foundry is connected through Entra ID; Container Apps hosting, richer analysis, recaps and producer exports remain pending. Earlier status tables describe the initial design milestone rather than the current implementation.

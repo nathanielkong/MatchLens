@@ -16,7 +16,7 @@ export function insightService(db:Pick<Pool,'query'>){
   // Only the explicit prefix is queried; never load tracking or hidden truth.
   // Whitelist event detail fields so generator metadata cannot enter the prompt.
   const events=(await db.query<ReplayEvent>(`SELECT sequence,clock_seconds,period,type,team_id,player_id,possession_id,outcome,home_score,away_score,
-   jsonb_build_object('xg',details->'xg','durationSeconds',details->'durationSeconds','possessionTeamId',details->'possessionTeamId') AS details
+   jsonb_build_object('periodClockSeconds',details->'periodClockSeconds','xg',details->'xg','durationSeconds',details->'durationSeconds','possessionTeamId',details->'possessionTeamId') AS details
    FROM replay_events WHERE match_id=$1 AND sequence<=$2 ORDER BY sequence`,[matchId,cutoff])).rows;
   const packet=evidencePacket(match,events,cutoff,audience);
   agent??=new ProjectAgentClient(config,postgresBudget(db));

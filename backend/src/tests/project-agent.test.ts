@@ -59,7 +59,7 @@ test('evidence packet cannot include future goals, hidden metadata or visual pos
  assert.equal(early.throughSequence,3);assert.ok(early.facts.every(f=>f.evidenceSequences.every(n=>n<=3)));
  assert.ok(!evidencePrompt(early).includes('HIDDEN_SCENARIO'));assert.ok(!early.facts.some(f=>f.id==='latest-goal'));
  assert.match(early.facts.find(f=>f.id==='pressing')!.text,/Home fictional 1/);
- assert.equal(evidencePacket(match,source,4,'casual').facts.at(-1)?.id,'latest-goal');
+ assert.ok(evidencePacket(match,source,4,'casual').facts.some(f=>f.id==='latest-goal'));
 });
 test('verifier rejects invented IDs, model prose, duplicate claims and malformed JSON; accepted output uses exact computed facts',()=>{
  const packet=evidencePacket(match,[event(1,'kickoff'),event(2,'shot')],2,'casual');
