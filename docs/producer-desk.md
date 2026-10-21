@@ -14,4 +14,6 @@ Migration 7 adds a deduplication key and a narrow SECURITY DEFINER publication f
 
 Automated review is fallible. All producer output remains a draft for human review. Production authentication, abuse protections, deployment and independent evaluation of generated prose remain future work.
 
+Run `npm run producer:check -w backend` for the rolled-back database checks (no model calls).
+
 Validation: unit tests cover unreviewed/future document rejection, source-preserving exports, Markdown escaping, purpose cache separation, mandatory recap score and recorded boundaries. The rolled-back database integration test covers publication, deduplication, prefix filtering, malformed/future evidence rejection and role isolation without model calls.

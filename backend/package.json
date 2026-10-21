@@ -19,7 +19,8 @@
     "db:test": "tsx src/tests/database.integration.ts",
     "ai:login": "az login --output none",
     "ai:budget:test": "tsx src/tests/ai-budget.integration.ts",
-    "turning-points:evaluate": "tsx src/turning-points/evaluate.ts"
+    "turning-points:evaluate": "tsx src/turning-points/evaluate.ts",
+    "producer:check": "tsx src/tests/producer.integration.ts"
   },
   "dependencies": {
     "@azure/ai-projects": "^2.9.0",
