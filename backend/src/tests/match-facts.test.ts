@@ -30,18 +30,18 @@ test('period and probability facts do not reveal the unseen second half or later
  assert.match(fact(6,'periods').text,/Second half: not started/);assert.match(fact(6,'probabilities').text,/synthetic-model estimates/);
  const packet=evidencePacket(match,events,6,'casual',context);assert.ok(packet.facts.every(f=>f.prefix.throughSequence===6&&f.evidenceSequences.every(n=>n<=6)));
 });
-test('summary requires broader coverage; talking points remain capped at two claims',async()=>{
- const packet=evidencePacket(match,events,6,'casual',context),ids=['score','chances','latest-goal','tactics','substitutions'];
+test('summary and talking points support richer, distinct evidence coverage',async()=>{
+ const packet=evidencePacket(match,events,6,'casual',context),ids=['score','chances','goals','tactics','substitutions'];
  const claims=ids.map(factId=>({factId,text:packet.facts.find(f=>f.id===factId)!.text.slice(0,310),whyItMatters:''}));
  const prompts:string[]=[];const agent={run:async<T>(prompt:string,_client:string,check:(s:string)=>T)=>{prompts.push(prompt);return {result:check(JSON.stringify(prompts.length===1?{claims}:{accepted:true,unsupportedClaimIds:[],reason:'Supported'})),cached:false};}};
- const answer=await runInsightWorkflow(agent,packet,'test');assert.equal(answer.result.claims.length,5);assert.equal(answer.result.presentation,'paragraph');assert.match(prompts[0],/connected match-summary paragraph/);assert.match(prompts[0],/100–160/);
+ const answer=await runInsightWorkflow(agent,packet,'test');assert.equal(answer.result.claims.length,5);assert.equal(answer.result.presentation,'paragraph');assert.match(prompts[0],/connected match-summary paragraph sequence/);assert.match(prompts[0],/220–350/);
  const short={run:async<T>(_p:string,_c:string,check:(s:string)=>T)=>({result:check(JSON.stringify({claims:claims.slice(0,2)})),cached:false})};
  await assert.rejects(runInsightWorkflow(short,packet,'test'),{code:'AI_VERIFICATION_FAILED'});
- await assert.rejects(runInsightWorkflow({run:async<T>(_p:string,_c:string,check:(s:string)=>T)=>({result:check(JSON.stringify({claims})),cached:false})},packet,'test',undefined,'talking_point'),{code:'AI_VERIFICATION_FAILED'});
+ const points=await runInsightWorkflow({run:async<T>(_p:string,_c:string,check:(s:string)=>T,contract:string)=>({result:check(JSON.stringify(contract.includes(':draft:')?{claims}:{accepted:true,unsupportedClaimIds:[],reason:'Supported'})),cached:false})},packet,'test',undefined,'talking_point');assert.equal(points.result.claims.length,5);
 });
 
 test('an under-covered summary gets one bounded repair and must still pass the model review',async()=>{
- const packet=evidencePacket(match,events,6,'casual',context),ids=['score','chances','latest-goal','tactics','substitutions'];
+ const packet=evidencePacket(match,events,6,'casual',context),ids=['score','chances','goals','tactics','substitutions'];
  const claims=ids.map(factId=>({factId,text:packet.facts.find(f=>f.id===factId)!.text.slice(0,310),whyItMatters:''}));
  const replies=[JSON.stringify({claims:claims.slice(0,2)}),JSON.stringify({claims}),JSON.stringify({accepted:true,unsupportedClaimIds:[],reason:'Supported'})],prompts:string[]=[];
  const agent={run:async<T>(prompt:string,_client:string,check:(raw:string)=>T)=>{prompts.push(prompt);return {result:check(replies.shift()!),cached:false};}};

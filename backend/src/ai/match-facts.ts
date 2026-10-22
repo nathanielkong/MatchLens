@@ -1,8 +1,9 @@
+import {detailedMatchFacts} from './detailed-facts.js';
 import {periodAnalysis} from '../analytics/periods.js';
 import {probabilityHistory} from '../probability/inference.js';
 import type {ReplayEvent} from '../analytics/statistics.js';
 import type {EvidenceMatch,Fact} from './evidence.js';
-export type EvidencePlayer={id:string;teamId:string;name:string;shirt:number;starter:boolean};
+export type EvidencePlayer={id:string;teamId:string;name:string;shirt:number;starter:boolean;position?:string;role?:string};
 export type MatchContext={players?:EvidencePlayer[];homeFormation?:string;awayFormation?:string;question?:string};
 const clock=(n:number)=>`${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`;
 export function additionalMatchFacts(match:EvidenceMatch,events:ReplayEvent[],context:MatchContext):Fact[]{
@@ -35,5 +36,6 @@ export function additionalMatchFacts(match:EvidenceMatch,events:ReplayEvent[],co
    add('players',selected.map(p=>{const entry=subs.find(e=>e.details.inPlayerId===p.id),exit=subs.find(e=>e.details.outPlayerId===p.id),red=events.find(e=>e.type==='red_card'&&e.player_id===p.id);return `${p.name} (${team(p.teamId)}, shirt ${p.shirt}): ${p.starter?'started':entry?`entered at elapsed ${clock(entry.clock_seconds)}`:'has not entered'}${exit?`, substituted off at elapsed ${clock(exit.clock_seconds)}`:''}${red?`, sent off at elapsed ${clock(red.clock_seconds)}`:''}; ${contributions(p.id)}`;}).join('. ')+'. These are recorded contributions, not player ratings or proof of causal impact.',relevant.length?relevant:[last]);
   }
  }
+ facts.push(...detailedMatchFacts(match,events,context));
  return facts;
 }

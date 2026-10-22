@@ -12,9 +12,9 @@ export async function loadEvidencePacket(db:Pick<Pool,'query'>,matchId:string,cu
   // Only the explicit prefix is queried; never load tracking or hidden truth.
   // Whitelist event detail fields so generator metadata cannot enter the prompt.
   const events=(await db.query<ReplayEvent>(`SELECT sequence,clock_seconds,period,type,team_id,player_id,possession_id,outcome,home_score,away_score,
-   jsonb_build_object('periodClockSeconds',details->'periodClockSeconds','xg',details->'xg','durationSeconds',details->'durationSeconds','possessionTeamId',details->'possessionTeamId','tactic',details->'tactic','reason',details->'reason','inPlayerId',details->'inPlayerId','outPlayerId',details->'outPlayerId','assistPlayerId',details->'assistPlayerId') AS details
+   jsonb_build_object('periodClockSeconds',details->'periodClockSeconds','xg',details->'xg','durationSeconds',details->'durationSeconds','possessionTeamId',details->'possessionTeamId','tactic',details->'tactic','reason',details->'reason','inPlayerId',details->'inPlayerId','outPlayerId',details->'outPlayerId','assistPlayerId',details->'assistPlayerId','keyPassPlayerId',details->'keyPassPlayerId','goalkeeperId',details->'goalkeeperId','recipientId',details->'recipientId','distanceMetres',details->'distanceMetres','progressiveMetres',details->'progressiveMetres','formation',details->'formation') AS details
    FROM replay_events WHERE match_id=$1 AND sequence<=$2 ORDER BY sequence`,[matchId,cutoff])).rows;
-  const players=(await db.query<EvidencePlayer>('SELECT p.id,p.team_id AS "teamId",p.name,p.shirt_number AS shirt,l.starter FROM replay_lineups l JOIN players p ON p.id=l.player_id WHERE l.match_id=$1 ORDER BY p.id',[matchId])).rows;
+  const players=(await db.query<EvidencePlayer>('SELECT p.id,p.team_id AS "teamId",p.name,p.shirt_number AS shirt,p.position,l.starter,l.role FROM replay_lineups l JOIN players p ON p.id=l.player_id WHERE l.match_id=$1 ORDER BY p.id',[matchId])).rows;
   const packet=evidencePacket(match,events,cutoff,audience,{players,homeFormation:match.home_formation,awayFormation:match.away_formation,question});
  return {packet,events};
 }

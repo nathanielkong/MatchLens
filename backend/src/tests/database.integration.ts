@@ -62,7 +62,9 @@ try{
   assert.deepEqual(rewind.probabilities,early.probabilities);
   assert.ok(rewind.probabilities.history.every((p:{time:number;sequence:number})=>p.time<=3&&p.sequence<=rewind.throughSequence));
   assert.ok(goal.probabilities.current.home>early.probabilities.current.home);
-  assert.equal(queryCount,3,'Repeated evidence and visual requests reuse the bounded replay cache');
+  const details=await (await fetch(`${base}/${id}/analysis?throughSequence=2`)).json();assert.equal(details.eventCount,2);assert.equal(details.teams[0].goals,0);assert.equal(details.fulltime,false);assert.ok(details.timeline.every((e:{sequence:number})=>e.sequence<=2));
+  assert.equal((await fetch(`${base}/${id}/analysis?atSeconds=2&throughSequence=1`)).status,400);
+  assert.equal(queryCount,4,'Repeated evidence and visual requests reuse the bounded replay cache');
   assert.equal((await fetch(`${base}/missing/state?atSeconds=0`)).status,404);
  }finally{await new Promise<void>((resolve,reject)=>server.close(e=>e?reject(e):resolve()));}
  await db.query('RESET ROLE');

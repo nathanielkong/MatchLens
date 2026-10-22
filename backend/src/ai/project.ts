@@ -14,7 +14,7 @@ export function projectConfig(env:Env=process.env):ProjectConfig {
  const agent=env.FOUNDRY_AGENT_NAME??'',version=env.FOUNDRY_AGENT_VERSION??'',model=env.FOUNDRY_MODEL_DEPLOYMENT_NAME??'';
  if(!/^[a-zA-Z0-9_-]{1,100}$/.test(agent)||!/^\d+$/.test(version)||!model.match(/^[a-zA-Z0-9_-]+\/[a-zA-Z0-9_.-]+$/))throw new Error('Set the Foundry agent name, pinned numeric version and connected model');
  if(!['true','false'].includes(env.AI_ENABLED??'false'))throw new Error('Invalid AI_ENABLED');
- return {endpoint:url.href.replace(/\/$/,''),agent,version,model,enabled:env.AI_ENABLED==='true',maxOutputTokens:bounded(env.AI_MAX_OUTPUT_TOKENS,800,64,1000),longOutputTokens:bounded(env.AI_LONG_OUTPUT_TOKENS,1600,64,2000),timeoutMs:bounded(env.AI_TIMEOUT_MS,45000,1000,60000)};
+ return {endpoint:url.href.replace(/\/$/,''),agent,version,model,enabled:env.AI_ENABLED==='true',maxOutputTokens:bounded(env.AI_MAX_OUTPUT_TOKENS,800,64,1000),longOutputTokens:bounded(env.AI_LONG_OUTPUT_TOKENS,6000,64,8000),timeoutMs:bounded(env.AI_TIMEOUT_MS,45000,1000,60000)};
 }
 export function projectStatus(env:Env=process.env){
  try {const c=projectConfig(env);return {provider:'foundry-agent',configured:true,enabled:c.enabled,authentication:'Microsoft Entra ID',credentialsVerified:false,agent:c.agent,version:c.version,message:'Configured locally; use ai:check -- --auth to verify Azure access.'};}
@@ -60,15 +60,15 @@ export class ProjectAgentClient {
  }
  async run<T>(input:string,clientId:string,verify:(text:string)=>T,contractVersion:string):Promise<{result:T;cached:boolean}> {
   if(!this.config.enabled)throw new AIError('AI_DISABLED');
-  if(!input.trim()||Buffer.byteLength(input)>16000)throw new AIError('AI_INPUT_LIMIT',400);
+  if(!input.trim()||Buffer.byteLength(input)>28000)throw new AIError('AI_INPUT_LIMIT',400);
   const key=createHash('sha256').update(JSON.stringify([this.config.endpoint,this.config.agent,this.config.version,this.config.model,contractVersion,input])).digest('hex');
   const cached=await this.budget.cached(key);
   if(cached!==null)return {result:cached as T,cached:true};
   const definition=await this.authenticate();
   // Reserve conservatively using UTF-8 bytes, agent instructions and framing.
   // Never refund failures/timeouts: Azure may have completed an unseen request.
-  const longDraft=/:((summary)|(question)):draft:/.test(contractVersion);
-  const outputLimit=longDraft?(this.config.longOutputTokens??1600):this.config.maxOutputTokens;
+  const longDraft=/:(summary|question|recap|talking_point):draft:/.test(contractVersion);
+  const outputLimit=longDraft?(this.config.longOutputTokens??6000):this.config.maxOutputTokens;
   const tokens=Buffer.byteLength(input)+Buffer.byteLength(definition.instructions??'')+outputLimit+4096;
   const id=randomUUID(),client=createHash('sha256').update(clientId).digest('hex');
   try {await this.budget.reserve(id,key,client,tokens);}catch(e){const message=e instanceof Error?e.message:'';throw new AIError(['AI_BUSY','AI_DAILY_LIMIT','AI_RATE_LIMIT','AI_DISABLED'].includes(message)?message:'AI_BUDGET_UNAVAILABLE',message==='AI_BUSY'?409:429);}

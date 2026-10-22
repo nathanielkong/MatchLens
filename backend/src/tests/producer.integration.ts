@@ -7,7 +7,9 @@ try{await db.query('BEGIN');const e=(await db.query('SELECT * FROM replay_events
  const id=await publish(doc);assert.equal(await publish(doc),id);
  assert.equal((await db.query('SELECT 1 FROM replay_producer_feed WHERE id=$1 AND through_sequence<=$2',[id,e.sequence])).rowCount,1);
  assert.equal((await db.query('SELECT 1 FROM replay_producer_feed WHERE id=$1 AND through_sequence<=$2',[id,e.sequence-1])).rowCount,0);
+ const expanded={...doc,claims:Array.from({length:12},(_,i)=>({...doc.claims[0],id:i?'fact-'+i:'score',text:'A longer accepted fixture sentence. '.repeat(12)}))};assert.ok(await publish(expanded));
  const reject=async(fn:()=>Promise<unknown>,pattern:RegExp)=>{await db.query('SAVEPOINT rejection');await assert.rejects(fn,pattern);await db.query('ROLLBACK TO SAVEPOINT rejection');};
+ await reject(()=>publish({...expanded,claims:[...expanded.claims,expanded.claims[0]]}),/INVALID_PRODUCER_DOCUMENT/);
  await reject(()=>publish({...doc,verification:{...doc.verification,accepted:false}}),/INVALID_PRODUCER_DOCUMENT/);
  await reject(()=>publish({...doc,claims:[{...doc.claims[0],evidenceSequences:[e.sequence+1]}]}),/INVALID_PRODUCER_EVIDENCE/);
  await reject(()=>publish({...doc,claims:[{...doc.claims[0],sourceText:undefined}]}),/INVALID_PRODUCER_EVIDENCE/);

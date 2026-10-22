@@ -20,7 +20,7 @@ test('producer recap requires the score and uses a separate cache contract',asyn
 test('a recap draft without the score is withheld before publication or review',async()=>{
  let calls=0;const extended={...packet,facts:[...packet.facts,{...packet.facts[0],id:'passing'}]};
  const agent={run:async<T>(_p:string,_id:string,verify:(raw:string)=>T)=>{calls++;return {result:verify(JSON.stringify({claims:[{factId:'passing',text:'The sides are level.',whyItMatters:'Neither leads.'}]})),cached:false};}};
- await assert.rejects(runInsightWorkflow(agent,extended,'client',undefined,'recap'),{code:'AI_VERIFICATION_FAILED'});assert.equal(calls,1);
+ await assert.rejects(runInsightWorkflow(agent,extended,'client',undefined,'recap'),{code:'AI_VERIFICATION_FAILED'});assert.equal(calls,2);
 });
 test('half-time and full-time recap facts follow recorded boundaries',()=>{
  const match={id:'fixture',home_team_id:'h',away_team_id:'a',home_team:'Home',away_team:'Away'};

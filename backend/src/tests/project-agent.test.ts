@@ -49,7 +49,7 @@ test('transport failures are not retried or exposed and oversized inputs never r
  const client=new ProjectAgentClient(projectConfig(env),f.budget,f.transport);
  await assert.rejects(client.run('test','local',x=>x,'v1'),e=>e instanceof AIError&&e.code==='AI_REQUEST_FAILED'&&!e.message.includes('credential'));
  assert.equal(attempts,1);assert.equal(f.finished,1);
- await assert.rejects(client.run('x'.repeat(16001),'local',x=>x,'v1'),{code:'AI_INPUT_LIMIT'});assert.equal(f.used,1);
+ await assert.rejects(client.run('x'.repeat(28001),'local',x=>x,'v1'),{code:'AI_INPUT_LIMIT'});assert.equal(f.used,1);
 });
 const match={id:'test',home_team_id:'h',away_team_id:'a',home_team:'Home fictional',away_team:'Away fictional'};
 const event=(sequence:number,type:string,outcome:string|null=null):ReplayEvent=>({sequence,clock_seconds:sequence*5,period:1,type,team_id:'h',player_id:null,possession_id:1,outcome,home_score:outcome==='goal'?1:0,away_score:0,details:{xg:.2,scenario:'HIDDEN_SCENARIO'}});
@@ -70,9 +70,9 @@ test('verifier rejects invented IDs, model prose, duplicate claims and malformed
 test('long-form drafts get a bounded response allowance; routing and review keep the smaller limit',async()=>{
  const f=fixture(),limits:number[]=[];f.transport.generate=async(_input,limit)=>{limits.push(limit);return {text:'CONNECTED',inputTokens:5,outputTokens:2};};
  const client=new ProjectAgentClient(projectConfig(env),f.budget,f.transport);
- await client.run('long draft','test',x=>x,'narrative-verification-v2:summary:draft:0');assert.equal(limits[0],1600);assert.ok(f.reserved>=1600+4096);
+ await client.run('long draft','test',x=>x,'narrative-verification-v2:summary:draft:0');assert.equal(limits[0],6000);assert.ok(f.reserved>=6000+4096);
  await client.run('short review','test',x=>x,'narrative-verification-v2:summary:verdict:0');assert.equal(limits[1],800);
- assert.throws(()=>projectConfig({...env,AI_LONG_OUTPUT_TOKENS:'2001'}));
+ assert.throws(()=>projectConfig({...env,AI_LONG_OUTPUT_TOKENS:'8001'}));
 });
 test('incomplete token-limited responses are identified and never returned as a successful answer',async()=>{
  let calls=0;const transport=azureAgentTransport(projectConfig(env),{credential:{getToken:async()=>({token:'test-token',expiresOnTimestamp:Date.now()+60000})},fetch:(async()=>{calls++;return Response.json({id:'incomplete',status:'incomplete',incomplete_details:{reason:'max_output_tokens'},output:[],usage:{input_tokens:20,output_tokens:800}});}) as typeof fetch});

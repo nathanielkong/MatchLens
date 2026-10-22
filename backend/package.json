@@ -22,6 +22,7 @@
     "turning-points:evaluate": "tsx src/turning-points/evaluate.ts",
     "producer:check": "tsx src/tests/producer.integration.ts",
     "reviews:check": "tsx src/tests/reviews.integration.ts",
+    "full-match:check": "tsx src/tests/full-match.integration.ts",
     "evidence:check": "tsx src/tests/evidence.integration.ts"
   },
   "dependencies": {

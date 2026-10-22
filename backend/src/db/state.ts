@@ -1,3 +1,4 @@
+import {matchDetails} from '../analytics/match-details.js';
 import {periodAnalysis} from '../analytics/periods.js';
 import {detectTurningPoints,turningPointMethod} from '../analytics/turning-points.js';
 import {probabilityHistory} from '../probability/inference.js';
@@ -25,6 +26,15 @@ export function stateRoutes(database:Pick<Pool,'query'>){
     details:{recipientId:e.details.recipientId,durationSeconds:e.details.durationSeconds,attackDirection:e.details.attackDirection,
      ballSpeedKmh:e.details.ballSpeedKmh,shotSpeedKmh:e.details.shotSpeedKmh,
      outPlayerId:e.details.outPlayerId,inPlayerId:e.details.inPlayerId}}))});
+ });
+ // Rich event-derived analysis is separate from the per-second playback payload.
+ router.get('/:id/analysis',async(req,res)=>{
+  const parsed=cutoff.safeParse(req.query);
+  if(!parsed.success){res.status(400).json({error:'Provide exactly one valid atSeconds or throughSequence cutoff'});return;}
+  const replay=await load(req.params.id);if(!replay){res.status(404).json({error:'Match not found'});return;}
+  const time=parsed.data.atSeconds===undefined?undefined:Math.min(parsed.data.atSeconds,replay.match.duration_seconds);
+  const seq=parsed.data.throughSequence??replay.events.filter(e=>e.clock_seconds<=time!).at(-1)?.sequence??0;
+  res.json({matchId:replay.match.id,...matchDetails(replay.events,[replay.match.home_team_id,replay.match.away_team_id],replay.players,seq,time)});
  });
  router.get('/:id/state',async(req,res)=>{
   const parsed=cutoff.safeParse(req.query);

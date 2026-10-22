@@ -44,3 +44,9 @@ test('rewritten results are not marked wholly cached when the earlier attempt ne
  agent.run=async<T>(input:string,client:string,verify:(text:string)=>T)=>{const result=await original(input,client,verify);return {...result,cached:agent.prompts.length>2};};
  const answer=await runInsightWorkflow(agent,packet,'test');assert.equal(answer.cached,false);assert.equal(answer.result.verification.rewrites,1);
 });
+
+test('equivalent decimal formatting is allowed, but changed numbers still fail the numeric guard',()=>{
+ const p={...packet,facts:[{...packet.facts[0],id:'chances',text:'Synthetic xG 0.250.'}]};
+ assert.ok(checkDraft('{"claims":[{"factId":"chances","text":"Synthetic xG is 0.25.","whyItMatters":""}]}',p));
+ assert.throws(()=>checkDraft('{"claims":[{"factId":"chances","text":"Synthetic xG is 0.26.","whyItMatters":""}]}',p),{code:'AI_VERIFICATION_FAILED'});
+});
