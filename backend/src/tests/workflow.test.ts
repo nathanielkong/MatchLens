@@ -38,3 +38,9 @@ test('JSONB key reordering cannot change the verifier prompt or add a paid revie
  }};
  const answer=await runInsightWorkflow(cachedAgent,packet,'ip');assert.equal(answer.cached,true);assert.equal(prompts[1],first.prompts[1]);assert.notEqual(identities[0],identities[1]);
 });
+
+test('rewritten results are not marked wholly cached when the earlier attempt needed inference',async()=>{
+ const agent=fake([draft,rejected,draft,approved]),original=agent.run;
+ agent.run=async<T>(input:string,client:string,verify:(text:string)=>T)=>{const result=await original(input,client,verify);return {...result,cached:agent.prompts.length>2};};
+ const answer=await runInsightWorkflow(agent,packet,'test');assert.equal(answer.cached,false);assert.equal(answer.result.verification.rewrites,1);
+});

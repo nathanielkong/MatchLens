@@ -1,7 +1,6 @@
 import type {Pool} from 'pg';
 import type {ReplayEvent} from '../analytics/statistics.js';
-import {runQuestionWorkflow} from './questions.js';
-import {runInsightWorkflow} from './workflow.js';
+import {reviewedWorkflow} from './reviews.js';
 import {postgresBudget} from './budget.js';
 import {AIError,ProjectAgentClient,projectConfig} from './project.js';
 import {evidencePacket,type Audience,type EvidenceMatch} from './evidence.js';
@@ -20,7 +19,7 @@ export function insightService(db:Pick<Pool,'query'>){
    FROM replay_events WHERE match_id=$1 AND sequence<=$2 ORDER BY sequence`,[matchId,cutoff])).rows;
   const packet=evidencePacket(match,events,cutoff,audience);
   agent??=new ProjectAgentClient(config,postgresBudget(db));
-  const answer=question?await runQuestionWorkflow(agent,packet,clientId,question):await runInsightWorkflow(agent,packet,clientId,undefined,purpose);
+  const answer=await reviewedWorkflow(db,agent,packet,clientId,question,purpose);
   if(purpose==='summary')return answer;
   const kind=purpose==='talking_point'?'talking_point':events.at(-1)?.type==='fulltime'?'fulltime':events.at(-1)?.type==='halftime'?'halftime':'catchup';
   const document={...answer.result,label:kind==='talking_point'?'Producer talking points':kind==='fulltime'?'Full-time recap':kind==='halftime'?'Half-time recap':'Replay recap',publicationKind:kind};

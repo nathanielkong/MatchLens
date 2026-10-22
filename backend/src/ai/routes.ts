@@ -13,6 +13,14 @@ export function aiRoutes(db:Pick<Pool,'query'>){
   let limits:unknown=null;try{limits=(await db.query('SELECT ai_usage() AS limits')).rows[0].limits;}catch{/* Readiness must not break replay during migration/outages. */}
   res.json({...status,limits});
  });
+ routes.get('/matches/:id/reviews',async(req,res)=>{
+  const parsed=z.object({throughSequence:z.coerce.number().int().min(0).max(100000),audience:z.enum(['casual','analyst']).default('casual')}).strict().safeParse(req.query);
+  if(!parsed.success){res.status(400).json({error:'Provide a valid cutoff and audience'});return;}
+  if(!(await db.query('SELECT 1 FROM replay_matches WHERE id=$1',[req.params.id])).rowCount){res.status(404).json({error:'Match not found'});return;}
+  const {throughSequence,audience}=parsed.data;
+  const {rows}=await db.query('SELECT * FROM ai_review_history($1,$2,$3)',[req.params.id,throughSequence,audience]);
+  res.json({matchId:req.params.id,throughSequence,audience,reviews:rows});
+ });
  routes.post(['/matches/:id/insights','/matches/:id/questions','/matches/:id/producer'],async(req,res)=>{
   // Cross-origin pages cannot consume a local user's allowance through a form.
   // Reverse proxies must strip incoming forwarded headers; trust proxy stays off.

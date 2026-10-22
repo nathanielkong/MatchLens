@@ -13,7 +13,7 @@ export function ProducerPanel({matchId,state,preview,onSeek,onPause}:{matchId:st
  async function generate(output:'talking_point'|'recap'){
   if(busy||!sequence)return;onPause();const id=++requestId.current;setBusy(output);setError('');
   try{const r=await fetch(`/api/matches/${encodeURIComponent(matchId)}/producer`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({throughSequence:sequence,audience,output}),signal:AbortSignal.timeout(200000)});const body=await r.json();if(!r.ok)throw new Error(body.error==='AI_RATE_LIMIT'?'Please wait a minute before generating another draft.':body.error==='AI_BUSY'?'Another AI request is running. Please wait.':'The draft could not be reviewed and saved. No unreviewed draft was published.');const feed=await load(sequence);if(id===requestId.current)setItems(feed);
-  }catch(e){if(id===requestId.current)setError(e instanceof Error?e.message:'The producer draft is unavailable.');}finally{if(id===requestId.current)setBusy('');}
+  }catch(e){if(id===requestId.current)setError(e instanceof Error?e.message:'The producer draft is unavailable.');}finally{window.dispatchEvent(new Event('matchlens-reviews-updated'));if(id===requestId.current)setBusy('');}
  }
  const visible=items.filter((i):i is Item&{document:Document}=>!!i.document&&i.document.matchId===matchId&&i.document.throughSequence<=sequence&&i.document.audience===audience);
  const recap=visible.find(i=>i.document.publicationKind!=='talking_point');

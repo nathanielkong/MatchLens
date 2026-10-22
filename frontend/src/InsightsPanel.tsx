@@ -1,10 +1,11 @@
 import {useEffect,useRef,useState} from 'react';
+import {ReviewDetails} from './ReviewDetails';
 import type {State} from './types';
 type Insight={question?:string;refusal?:string;matchId:string;throughSequence:number;atSeconds:number;audience:'casual'|'analyst';label:string;
  claims:{id:string;text:string;whyItMatters?:string;sourceText?:string;evidenceSequences:number[];prefix:{fromSequence:number;throughSequence:number}}[];
  verification:{accepted:boolean;method:string;trace?:{role:string;status:string}[]}};
 const clock=(n:number)=>`${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`;
-const errors:Record<string,string>={AI_DISABLED:'AI is switched off in the backend.',AI_DAILY_LIMIT:'Today’s AI allowance has been reached. Cached results remain available.',AI_RATE_LIMIT:'Please wait a minute before requesting another answer.',AI_BUSY:'An insight is already being generated. Please wait.',AI_VERIFICATION_FAILED:'The answer did not pass verification and has been withheld.',AI_AZURE_AUTH_OR_AGENT_ACCESS:'The backend needs Azure sign-in or access to the configured agent.',AI_NO_EVIDENCE:'Play a little further to collect match evidence.'};
+const errors:Record<string,string>={AI_DISABLED:'AI is switched off in the backend.',AI_DAILY_LIMIT:'Today’s AI allowance has been reached. Cached results remain available.',AI_RATE_LIMIT:'Please wait a minute before requesting another answer.',AI_BUSY:'An insight is already being generated. Please wait.',AI_VERIFICATION_FAILED:'The answer did not pass verification and has been withheld.',AI_AZURE_AUTH_OR_AGENT_ACCESS:'The backend needs Azure sign-in or access to the configured agent.',AI_NO_EVIDENCE:'Play a little further to collect match evidence.',AI_REVIEW_LOG_UNAVAILABLE:'The review could not be saved. Please try again.'};
 export function InsightsPanel({matchId,state,onSeek,onPause,preview}:{matchId:string;state:State|null|undefined;onSeek:(sequence:number)=>void;onPause:()=>void;preview:boolean}){
  const [audience,setAudience]=useState<'casual'|'analyst'>('casual'),[busy,setBusy]=useState(false),[error,setError]=useState('');
  const [question,setQuestion]=useState('');
@@ -21,7 +22,7 @@ export function InsightsPanel({matchId,state,onSeek,onPause,preview}:{matchId:st
    const body=await response.json();if(!response.ok)throw new Error(body.error??'AI_UNAVAILABLE');
    if(id===requestId.current)setAnswer(body);
   }catch(e){if(id===requestId.current)setError(errors[e instanceof Error?e.message:'']??'The summary is unavailable. No unverified answer was shown.');}
-  finally{if(id===requestId.current)setBusy(false);}
+  finally{window.dispatchEvent(new Event('matchlens-reviews-updated'));if(id===requestId.current)setBusy(false);}
  }
  // Never display an insight from the future after the user rewinds.
  const visible=answer&&answer.result.throughSequence<=sequence?answer:null;
@@ -43,7 +44,7 @@ export function InsightsPanel({matchId,state,onSeek,onPause,preview}:{matchId:st
 
    </form>
    <p className="insight-disclaimer">AI can make mistakes. Check the linked evidence.</p>
-   <details className="room-details"><summary>Review details</summary><p>Uses recorded facts through the selected moment. Tactical explanations and forecasts are unavailable.</p>{visible?.result.verification.trace&&<ol className="review-steps">{visible.result.verification.trace.map((step,i)=><li key={i}><b>{{orchestrator:'Scope',analysis:'Evidence',narrative:'Writing',verifier:'Review'}[step.role]??step.role}</b><span>{step.status}</span></li>)}</ol>}</details>
+   <ReviewDetails matchId={matchId} sequence={sequence} audience={audience} preview={preview} onSeek={onSeek}/>
   </div>
  </section>;
 }
