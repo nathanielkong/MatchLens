@@ -13,9 +13,17 @@ for(const match of matches){
   assert.ok(state.turningPoints.points.every((p:{sequence:number;atSeconds:number;largestShift:number})=>p.sequence<=state.throughSequence&&p.atSeconds<=time&&p.largestShift>=.08-1e-12));
   assert.deepEqual(state.turningPoints.points.filter((p:{sequence:number})=>p.sequence<=priorSequence),priorPoints);
   priorPoints=state.turningPoints.points;priorSequence=state.throughSequence;
+  assert.equal(state.analysis.throughSequence,state.throughSequence);
+  for(const p of state.analysis.periods)assert.ok(p.throughSequence<=state.throughSequence);
+  for(const team of state.statistics.teams){
+   const halves=state.analysis.periods.flatMap((p:{teams:{teamId:string;shots:number;xg:number;goals:number;pressingSequences:number}[]})=>p.teams.filter(t=>t.teamId===team.teamId));
+   assert.equal(halves.reduce((sum:number,t:{shots:number})=>sum+t.shots,0),team.shots);
+   assert.equal(halves.reduce((sum:number,t:{pressingSequences:number})=>sum+t.pressingSequences,0),team.pressingSequences);
+   assert.ok(Math.abs(halves.reduce((sum:number,t:{xg:number})=>sum+t.xg,0)-team.xg)<.002);
+  }
   assert.ok(state.events.every((e:{clock_seconds:number})=>e.clock_seconds<=time));
   if(time===match.duration_seconds){const {home,away}=state.statistics.score;assert.equal(state.phase,'fulltime');assert.equal(state.probabilities.current.home,Number(home>away));assert.equal(state.probabilities.current.draw,Number(home===away));}
  }
  const rewind=await read(`/matches/${match.id}/state?atSeconds=0&includeFrame=false`);requests++;assert.deepEqual(rewind,early);
 }
-warm.sort((a,b)=>a-b);console.log(JSON.stringify({showcaseMatches:matches.length,requests,warmMedianMs:Math.round(warm[warm.length>>1]*10)/10,warmMaxMs:Math.round(warm.at(-1)!*10)/10,checks:'Normalized probabilities, no future history/events, fulltime resolution, turning-point threshold/prefix invariance and exact rewind reproducibility.'},null,2));
+warm.sort((a,b)=>a-b);console.log(JSON.stringify({showcaseMatches:matches.length,requests,warmMedianMs:Math.round(warm[warm.length>>1]*10)/10,warmMaxMs:Math.round(warm.at(-1)!*10)/10,checks:'Normalized probabilities, no future history/events, fulltime resolution, period totals reconciliation, turning-point prefix invariance and exact rewind reproducibility.'},null,2));

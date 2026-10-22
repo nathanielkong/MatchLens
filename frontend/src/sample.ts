@@ -1,3 +1,4 @@
+import {periodAnalysis} from '../../backend/src/analytics/periods.ts';
 // Explicit offline design preview, using only the committed, partial public sample.
 import {probabilityHistory} from '../../backend/src/probability/inference.ts';
 import sample from '../../samples/showcase-prefix.json' with {type:'json'};
@@ -24,6 +25,7 @@ export function sampleResponse(path:string):unknown{
   const last=events.at(-1),time=seq!==null?(last?.clock_seconds??0):Math.min(duration,Number(url.searchParams.get('atSeconds')));
   const evidence=events as unknown as ReplayEvent[];
   return {matchId:id,atSeconds:time,throughSequence:last?.sequence??0,period:1,periodClockSeconds:time,
+   analysis:periodAnalysis(evidence,[sample.match.home_team_id,sample.match.away_team_id],last?.sequence??0,time),
    probabilities:probabilityHistory(evidence,sample.match.home_team_id,time),
    phase:time>=duration?'sample_complete':'playing',statistics:calculateStatistics(evidence,[sample.match.home_team_id,sample.match.away_team_id],groupPressing(evidence)),
    events:events.slice(-100).reverse(),keyEvents:events.filter(e=>['shot','save','red_card','yellow_card','substitution','tactic_change','halftime','fulltime','kickoff'].includes(e.type)).reverse()};

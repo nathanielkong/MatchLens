@@ -1,3 +1,4 @@
+import {periodAnalysis} from '../analytics/periods.js';
 import {detectTurningPoints,turningPointMethod} from '../analytics/turning-points.js';
 import {probabilityHistory} from '../probability/inference.js';
 import {Router} from 'express';
@@ -42,6 +43,7 @@ export function stateRoutes(database:Pick<Pool,'query'>){
   const periodClock=Number(last?.details.periodClockSeconds??0)+Math.max(0,atSeconds-(last?.clock_seconds??atSeconds));
   res.json({matchId:match.id,atSeconds,throughSequence:resolvedSequence,period,periodClockSeconds:periodClock,phase,
    turningPoints:{...turningPointMethod,points:detectTurningPoints(events,match.home_team_id,resolvedSequence)},
+   analysis:periodAnalysis(events,[match.home_team_id,match.away_team_id],resolvedSequence,atSeconds),
    probabilities:probabilityHistory(events,match.home_team_id,atSeconds),
    statistics:calculateStatistics(events,[match.home_team_id,match.away_team_id],groupPressing(events)),
    events:events.slice(-100).reverse(),keyEvents:events.filter(e=>['shot','save','red_card','yellow_card','substitution','tactic_change','halftime','fulltime','kickoff'].includes(e.type)).reverse(),
