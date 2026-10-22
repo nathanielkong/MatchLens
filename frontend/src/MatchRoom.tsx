@@ -44,7 +44,7 @@ export default function MatchRoom(){
  const describe=(e:Event)=>{
   const name=players.find(p=>p.player_id===e.player_id)?.name;
   if(e.type==='shot')return `${e.outcome==='goal'?'Goal':e.outcome==='saved'?'Shot saved':e.outcome==='blocked'?'Shot blocked':'Shot off target'}${name?` · ${name}`:''}`;
-  if(e.type==='substitution')return `Substitution · ${name??''}`;
+  if(e.type==='substitution'){const incoming=players.find(p=>p.player_id===e.details.inPlayerId)?.name;return `${incoming??'Substitute'} on · ${name??'Player'} off`;}
   if(e.type==='tactic_change')return `Tactical change · ${String(e.details.tactic??'').replaceAll('_',' ')}`;
   return `${e.type.replaceAll('_',' ')}${name?` · ${name}`:''}`;
  };

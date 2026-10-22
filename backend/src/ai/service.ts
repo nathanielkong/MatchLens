@@ -3,21 +3,27 @@ import type {ReplayEvent} from '../analytics/statistics.js';
 import {reviewedWorkflow} from './reviews.js';
 import {postgresBudget} from './budget.js';
 import {AIError,ProjectAgentClient,projectConfig} from './project.js';
+import type {EvidencePlayer} from './match-facts.js';
 import {evidencePacket,type Audience,type EvidenceMatch} from './evidence.js';
-export function insightService(db:Pick<Pool,'query'>){
- let agent:ProjectAgentClient|undefined;
- return async(matchId:string,cutoff:number,audience:Audience,clientId:string,question?:string,purpose:'talking_point'|'recap'|'summary'='summary')=>{
-  if(process.env.AI_PROVIDER!=='foundry-agent')throw new AIError('AI_NOT_CONFIGURED');
-  const config=projectConfig();if(!config.enabled)throw new AIError('AI_DISABLED');
-  const match=(await db.query<EvidenceMatch>(`SELECT m.id,m.home_team_id,m.away_team_id,h.name AS home_team,a.name AS away_team
+export async function loadEvidencePacket(db:Pick<Pool,'query'>,matchId:string,cutoff:number,audience:Audience,question?:string){
+  const match=(await db.query<EvidenceMatch&{home_formation:string;away_formation:string}>(`SELECT m.id,m.home_team_id,m.away_team_id,h.name AS home_team,a.name AS away_team,m.metadata->>'homeFormation' AS home_formation,m.metadata->>'awayFormation' AS away_formation
    FROM replay_matches m JOIN teams h ON h.id=m.home_team_id JOIN teams a ON a.id=m.away_team_id WHERE m.id=$1`,[matchId])).rows[0];
   if(!match)throw new AIError('AI_MATCH_NOT_FOUND',404);
   // Only the explicit prefix is queried; never load tracking or hidden truth.
   // Whitelist event detail fields so generator metadata cannot enter the prompt.
   const events=(await db.query<ReplayEvent>(`SELECT sequence,clock_seconds,period,type,team_id,player_id,possession_id,outcome,home_score,away_score,
-   jsonb_build_object('periodClockSeconds',details->'periodClockSeconds','xg',details->'xg','durationSeconds',details->'durationSeconds','possessionTeamId',details->'possessionTeamId') AS details
+   jsonb_build_object('periodClockSeconds',details->'periodClockSeconds','xg',details->'xg','durationSeconds',details->'durationSeconds','possessionTeamId',details->'possessionTeamId','tactic',details->'tactic','reason',details->'reason','inPlayerId',details->'inPlayerId','outPlayerId',details->'outPlayerId','assistPlayerId',details->'assistPlayerId') AS details
    FROM replay_events WHERE match_id=$1 AND sequence<=$2 ORDER BY sequence`,[matchId,cutoff])).rows;
-  const packet=evidencePacket(match,events,cutoff,audience);
+  const players=(await db.query<EvidencePlayer>('SELECT p.id,p.team_id AS "teamId",p.name,p.shirt_number AS shirt,l.starter FROM replay_lineups l JOIN players p ON p.id=l.player_id WHERE l.match_id=$1 ORDER BY p.id',[matchId])).rows;
+  const packet=evidencePacket(match,events,cutoff,audience,{players,homeFormation:match.home_formation,awayFormation:match.away_formation,question});
+ return {packet,events};
+}
+export function insightService(db:Pick<Pool,'query'>){
+ let agent:ProjectAgentClient|undefined;
+ return async(matchId:string,cutoff:number,audience:Audience,clientId:string,question?:string,purpose:'talking_point'|'recap'|'summary'='summary')=>{
+  if(process.env.AI_PROVIDER!=='foundry-agent')throw new AIError('AI_NOT_CONFIGURED');
+  const config=projectConfig();if(!config.enabled)throw new AIError('AI_DISABLED');
+  const {packet,events}=await loadEvidencePacket(db,matchId,cutoff,audience,question);
   agent??=new ProjectAgentClient(config,postgresBudget(db));
   const answer=await reviewedWorkflow(db,agent,packet,clientId,question,purpose);
   if(purpose==='summary')return answer;

@@ -3,7 +3,7 @@ type Check={attempt:1|2;stage:'routing'|'draft'|'review';outcome:'passed'|'rejec
 type Review={id:string;match_id:string;through_sequence:number;at_seconds:number;audience:string;task:string;outcome:string;elapsed_ms:number;cached:boolean;checks:Check[]};
 const titles:Record<string,string>={summary:'Summary',question:'Question',talking_point:'Talking points',recap:'Recap'};
 const outcomes:Record<string,string>={passed:'Passed',revised:'Revised & passed',withheld:'Withheld',unsupported:'No supporting facts',unavailable:'Unavailable'};
-const facts:Record<string,string>={score:'Score',chances:'Shots',passing:'Passing',pressing:'Pressing',discipline:'Cards','latest-goal':'Latest goal','turning-point':'Probability shift'};
+const facts:Record<string,string>={score:'Score',chances:'Shots',passing:'Passing',pressing:'Pressing',discipline:'Cards','latest-goal':'Latest goal','turning-point':'Probability shift',tactics:'Tactics',changes:'Changes',substitutions:'Substitutions',goals:'Goals',formations:'Formations',probabilities:'Result estimates',periods:'Half comparisons',players:'Players'};
 const clock=(n:number)=>`${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`;
 export function ReviewDetails({matchId,sequence,audience,preview,onSeek}:{matchId:string;sequence:number;audience:string;preview:boolean;onSeek:(n:number)=>void}){
  const [open,setOpen]=useState(false),[revision,setRevision]=useState(0),[loading,setLoading]=useState(false),[error,setError]=useState(false);

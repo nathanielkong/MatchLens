@@ -48,7 +48,11 @@ try {
     await client.query(await readFile(new URL('../../src/db/008-review-history.sql', import.meta.url), 'utf8'));
     await client.query('INSERT INTO schema_migrations(version) VALUES(8)');
   }
+  if (!(await client.query('SELECT 1 FROM schema_migrations WHERE version=9')).rowCount) {
+    await client.query(await readFile(new URL('../../src/db/009-expanded-review-facts.sql', import.meta.url), 'utf8'));
+    await client.query('INSERT INTO schema_migrations(version) VALUES(9)');
+  }
   await client.query('COMMIT');
-  console.log('Database schema ready (version 8).');
+  console.log('Database schema ready (version 9).');
 } catch (error) { await client.query('ROLLBACK'); throw error; }
 finally { client.release(); await pool.end(); }

@@ -67,3 +67,14 @@ test('verifier rejects invented IDs, model prose, duplicate claims and malformed
  const verified=verifySelection('{"factIds":["chances"]}',packet);
  assert.equal(verified.claims[0].text,packet.facts.find(f=>f.id==='chances')!.text);assert.equal(verified.verification.accepted,true);
 });
+test('long-form drafts get a bounded response allowance; routing and review keep the smaller limit',async()=>{
+ const f=fixture(),limits:number[]=[];f.transport.generate=async(_input,limit)=>{limits.push(limit);return {text:'CONNECTED',inputTokens:5,outputTokens:2};};
+ const client=new ProjectAgentClient(projectConfig(env),f.budget,f.transport);
+ await client.run('long draft','test',x=>x,'narrative-verification-v2:summary:draft:0');assert.equal(limits[0],1600);assert.ok(f.reserved>=1600+4096);
+ await client.run('short review','test',x=>x,'narrative-verification-v2:summary:verdict:0');assert.equal(limits[1],800);
+ assert.throws(()=>projectConfig({...env,AI_LONG_OUTPUT_TOKENS:'2001'}));
+});
+test('incomplete token-limited responses are identified and never returned as a successful answer',async()=>{
+ let calls=0;const transport=azureAgentTransport(projectConfig(env),{credential:{getToken:async()=>({token:'test-token',expiresOnTimestamp:Date.now()+60000})},fetch:(async()=>{calls++;return Response.json({id:'incomplete',status:'incomplete',incomplete_details:{reason:'max_output_tokens'},output:[],usage:{input_tokens:20,output_tokens:800}});}) as typeof fetch});
+ await assert.rejects(transport.generate('draft',800),{code:'AI_OUTPUT_LIMIT'});assert.equal(calls,1);
+});

@@ -21,7 +21,8 @@
     "ai:budget:test": "tsx src/tests/ai-budget.integration.ts",
     "turning-points:evaluate": "tsx src/turning-points/evaluate.ts",
     "producer:check": "tsx src/tests/producer.integration.ts",
-    "reviews:check": "tsx src/tests/reviews.integration.ts"
+    "reviews:check": "tsx src/tests/reviews.integration.ts",
+    "evidence:check": "tsx src/tests/evidence.integration.ts"
   },
   "dependencies": {
     "@azure/ai-projects": "^2.9.0",

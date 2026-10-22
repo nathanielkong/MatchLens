@@ -1,3 +1,4 @@
+import {additionalMatchFacts,type MatchContext} from './match-facts.js';
 import {detectTurningPoints} from '../analytics/turning-points.js';
 import {z} from 'zod';
 import {calculateStatistics,groupPressing,type ReplayEvent} from '../analytics/statistics.js';
@@ -5,8 +6,9 @@ import {AIError} from './project.js';
 export type Audience='casual'|'analyst';
 export type EvidenceMatch={id:string;home_team_id:string;away_team_id:string;home_team:string;away_team:string};
 export type Fact={id:string;text:string;evidenceSequences:number[];prefix:{fromSequence:number;throughSequence:number}};
-export const evidenceVersion='evidence-catalog-v3';
-export function evidencePacket(match:EvidenceMatch,source:ReplayEvent[],cutoff:number,audience:Audience){
+export const evidenceVersion='evidence-catalog-v4';
+export function evidencePacket(match:EvidenceMatch,source:ReplayEvent[],cutoff:number,audience:Audience,context:MatchContext={}){
+ match={...match,home_team:match.home_team.replace(/^MatchLens /,''),away_team:match.away_team.replace(/^MatchLens /,'')};
  const events=source.filter(e=>e.sequence<=cutoff).sort((a,b)=>a.sequence-b.sequence);
  const last=events.at(-1);if(!last)throw new AIError('AI_NO_EVIDENCE',400);
  const stats=calculateStatistics(events,[match.home_team_id,match.away_team_id],groupPressing(events));
@@ -31,6 +33,7 @@ export function evidencePacket(match:EvidenceMatch,source:ReplayEvent[],cutoff:n
  if(shift){const label=shift.shiftedOutcome==='home'?`${match.home_team} win`:shift.shiftedOutcome==='away'?`${match.away_team} win`:'draw';
   add('turning-point',`At elapsed ${Math.floor(shift.atSeconds/60)}:${String(shift.atSeconds%60).padStart(2,'0')}, a ${shift.kind.replace('_',' ')} changed the model's ${label} probability from ${(shift.before[shift.shiftedOutcome]*100).toFixed(1)}% to ${(shift.after[shift.shiftedOutcome]*100).toFixed(1)}%. This is a same-clock model shift of ${(shift.largestShift*100).toFixed(1)} percentage points, not proof of tactical causality or real-football odds.`,events.filter(e=>e.sequence===shift.sequence));
  }
+ facts.push(...additionalMatchFacts(match,events,context));
  return {version:evidenceVersion,matchId:match.id,audience,throughSequence,atSeconds:last.clock_seconds,synthetic:true as const,facts};
 }
 export type EvidencePacket=ReturnType<typeof evidencePacket>;

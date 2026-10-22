@@ -26,8 +26,8 @@ test('rewrite and repeated rejection have distinct outcomes and never persist re
  assert.equal(failed.rows[0][5],'withheld');assert.equal(failed.prompts.length,4);assert.ok(!JSON.stringify(failed.rows).includes('private rejected feedback'));
 });
 test('invalid numbers are withheld before a model reviewer can accept them',async()=>{
- const h=harness([draft.replace('0–0','9–0')]);await assert.rejects(reviewedWorkflow(h.db,h.agent,packet,'test'),{code:'AI_VERIFICATION_FAILED'});
- assert.equal(h.prompts.length,1);assert.equal(h.rows[0][5],'withheld');assert.deepEqual(JSON.parse(h.rows[0][8] as string),[{attempt:1,stage:'draft',outcome:'rejected',factIds:[]}]);
+ const h=harness([draft.replace('0–0','9–0'),draft.replace('0–0','9–0')]);await assert.rejects(reviewedWorkflow(h.db,h.agent,packet,'test'),{code:'AI_VERIFICATION_FAILED'});
+ assert.equal(h.prompts.length,2);assert.equal(h.rows[0][5],'withheld');assert.deepEqual(JSON.parse(h.rows[0][8] as string),[{attempt:1,stage:'draft',outcome:'rejected',factIds:[]},{attempt:2,stage:'draft',outcome:'rejected',factIds:[]}]);
 });
 test('unsupported questions differ from failures and the user question is not saved',async()=>{
  const h=harness(['{"factIds":[]}']);const answer=await reviewedWorkflow(h.db,h.agent,packet,'test','Who will win?');
