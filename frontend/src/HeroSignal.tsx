@@ -20,7 +20,7 @@ export function RollingStat({to}:{to:number}){
   strip.style.transform='translateY(0)';let animation:Animation|undefined,visible=false,started=false;
   const target=element.closest('.home-strip')??element;
   const start=()=>{if(started||!visible||window.scrollY<16)return;started=true;
-   animation=strip.animate([{transform:'translateY(0)'},{transform:final}],{delay:220,duration:to*150+700,easing:`steps(${to}, end)`,fill:'forwards'});
+   animation=strip.animate([{transform:'translateY(0)'},{transform:final}],{delay:220,duration:to*130+620,easing:`steps(${to}, end)`,fill:'forwards'});
    observer.disconnect();window.removeEventListener('scroll',start);
   };
   const observer=new IntersectionObserver(([entry])=>{visible=entry.isIntersecting&&entry.intersectionRatio>=.75;start();},{threshold:.75,rootMargin:'0px 0px -15% 0px'});

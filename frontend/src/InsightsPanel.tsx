@@ -26,23 +26,24 @@ export function InsightsPanel({matchId,state,onSeek,onPause,preview}:{matchId:st
  // Never display an insight from the future after the user rewinds.
  const visible=answer&&answer.result.throughSequence<=sequence?answer:null;
  return <section className="panel insights-panel" aria-label="Evidence summary">
-  <div className="panel-heading"><div><p className="eyebrow muted">03 / EVIDENCE TO AIR</p><h3>A story you can check.</h3><span>A narrative agent explains. A separate verifier checks the evidence.</span></div>
+  <div className="panel-heading"><div><p className="eyebrow muted">03 / EVIDENCE TO AIR</p><h3>A story you can check.</h3></div>
   <div className="segmented" aria-label="Summary audience"><button aria-pressed={audience==='casual'} onClick={()=>setAudience('casual')}>Casual</button><button aria-pressed={audience==='analyst'} onClick={()=>setAudience('analyst')}>Analyst</button></div></div>
   <div className="insights-content">
-   {visible?<><p className="evidence-time">Evidence through {clock(visible.result.atSeconds)} · Event {visible.result.throughSequence} · {visible.cached?'Cached result':'AI-written'} · {visible.result.verification.accepted?'Reviewed':'Evidence unavailable'}</p>
+   {visible?<><p className="evidence-time">Evidence through {clock(visible.result.atSeconds)} · {visible.cached?'Saved summary':'AI-written'} · {visible.result.verification.accepted?'Reviewed':'Evidence unavailable'}</p>
     {visible.result.question&&<p className="asked-question">{visible.result.question}</p>}
     {visible.result.refusal&&<p role="status">{visible.result.refusal}</p>}
-    <div className="insight-claims">{visible.result.claims.map(claim=><article key={claim.id}><p>{claim.text}</p>{claim.whyItMatters&&<p className="insight-why">{claim.whyItMatters}</p>}{claim.sourceText&&<details className="insight-source"><summary>Inspect calculated evidence</summary><p>{claim.sourceText}</p></details>}<div className="insight-citations"><span>Calculated from events {claim.prefix.fromSequence}–{claim.prefix.throughSequence}</span>{claim.evidenceSequences.map(n=><button key={n} onClick={()=>onSeek(n)}>Event {n} ↗</button>)}</div></article>)}</div>
-   </>:<p className="insight-empty">{preview?'AI summaries use the connected match library. The public sample remains available without model calls.':busy?'Writing the story, then reviewing every claim…':'Pause at a moment, choose your audience, and bring the evidence into focus.'}</p>}
+    <div className="insight-claims">{visible.result.claims.map(claim=><article key={claim.id}><p>{claim.text}</p>{claim.whyItMatters&&<p className="insight-why">{claim.whyItMatters}</p>}{claim.sourceText&&<details className="insight-source"><summary>Source evidence</summary><p>{claim.sourceText}</p></details>}<div className="insight-citations"><span>Events {claim.prefix.fromSequence}–{claim.prefix.throughSequence}</span>{claim.evidenceSequences.map(n=><button key={n} onClick={()=>onSeek(n)}>Event {n} ↗</button>)}</div></article>)}</div>
+   </>:<p className="insight-empty">{preview?'Connect a match to use AI summaries.':busy?'Writing and checking…':'A summary of the selected moment.'}</p>}
    {error&&<p className="insight-error" role="alert">{error}</p>}
-   <div className="insights-actions"><button className="primary-link" disabled={preview||!ready||busy||!sequence} onClick={()=>generate()}>{busy?'Checking evidence…':'Generate summary'} <span aria-hidden="true">↗</span></button><small>{preview?'Sample preview':!ready?'AI connection is not enabled.':'Runs only when requested · Model usage is billed'}</small></div>
+   <div className="insights-actions"><button className="primary-link" disabled={preview||!ready||busy||!sequence} onClick={()=>generate()}>{busy?'Checking evidence…':'Generate summary'} <span aria-hidden="true">↗</span></button>{(preview||!ready)&&<small>{preview?'Sample preview':'AI unavailable'}</small>}</div>
    <form className="match-question" onSubmit={e=>{e.preventDefault();void generate(true);}}>
     <label htmlFor="match-question">Ask about this moment</label>
-    <p>Try “Who is leading?” or “How does passing compare?” Answers use evidence through the selected minute.</p>
+
     <div><input id="match-question" value={question} onChange={e=>setQuestion(e.target.value)} minLength={5} maxLength={300} placeholder="What do the shots tell us so far?" disabled={preview||busy} required/><button type="submit" disabled={preview||!ready||busy||!sequence||question.trim().length<5}>Ask MatchLens ↗</button></div>
-    <small>Score, shots, passing, pressing, red cards, latest goal and detected shifts · Each question is independent.</small>
+
    </form>
-   {visible?.result.verification.trace&&<div className="agent-trace" aria-label="Agent workflow">{visible.result.verification.trace.map((step,i)=><span key={i}><b>{step.role}</b> {step.status}</span>)}</div>}<p className="method-note">Fictional match data. Schema, evidence-ID and numeric checks run alongside a separate model review. A model verifier can miss errors; inspect the original evidence. Answers cover the available fact catalogue. Model-based turning points are evaluated against event anchors. Tactical causes and forecasts are not available. Saved producer drafts and recap exports are available below.</p>
+   <p className="insight-disclaimer">AI can make mistakes. Check the linked evidence.</p>
+   <details className="room-details"><summary>Review details</summary><p>Uses recorded facts through the selected moment. Tactical explanations and forecasts are unavailable.</p>{visible?.result.verification.trace&&<ol className="review-steps">{visible.result.verification.trace.map((step,i)=><li key={i}><b>{{orchestrator:'Scope',analysis:'Evidence',narrative:'Writing',verifier:'Review'}[step.role]??step.role}</b><span>{step.status}</span></li>)}</ol>}</details>
   </div>
  </section>;
 }
