@@ -4,7 +4,7 @@ import {probabilityHistory} from '../probability/inference.js';
 import type {ReplayEvent} from '../analytics/statistics.js';
 import type {EvidenceMatch,Fact} from './evidence.js';
 export type EvidencePlayer={id:string;teamId:string;name:string;shirt:number;starter:boolean;position?:string;role?:string};
-export type MatchContext={players?:EvidencePlayer[];homeFormation?:string;awayFormation?:string;question?:string};
+export type MatchContext={players?:EvidencePlayer[];homeFormation?:string;awayFormation?:string;question?:string;focusPlayerIds?:string[];focusChangeSequences?:number[];inheritedWindow?:{from:number;to:number}};
 const clock=(n:number)=>`${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`;
 export function additionalMatchFacts(match:EvidenceMatch,events:ReplayEvent[],context:MatchContext):Fact[]{
  const last=events.at(-1)!;const facts:Fact[]=[],roster=context.players??[];

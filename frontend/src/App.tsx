@@ -1,5 +1,6 @@
+import {lazy,Suspense} from 'react';
 import {Home} from './Home';
-import MatchRoom from './MatchRoom';
+const MatchRoom=lazy(()=>import('./MatchRoom'));
 export default function App(){
- return window.location.pathname.replace(/\/+$/,'')==='/match-room'?<MatchRoom/>:<Home/>;
+ return window.location.pathname.replace(/\/+$/,'')==='/match-room'?<Suspense fallback={<main className="route-loading" role="status">Opening the match room…</main>}><MatchRoom/></Suspense>:<Home/>;
 }

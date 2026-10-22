@@ -50,3 +50,11 @@ test('equivalent decimal formatting is allowed, but changed numbers still fail t
  assert.ok(checkDraft('{"claims":[{"factId":"chances","text":"Synthetic xG is 0.25.","whyItMatters":""}]}',p));
  assert.throws(()=>checkDraft('{"claims":[{"factId":"chances","text":"Synthetic xG is 0.26.","whyItMatters":""}]}',p),{code:'AI_VERIFICATION_FAILED'});
 });
+
+test('the bounded rewrite identifies the rejected fact and number without relaxing evidence checks',async()=>{
+ const agent=fake([draft.replace('0–0','9–0'),draft,approved]);
+ const answer=await runInsightWorkflow(agent,packet,'client');
+ assert.equal(answer.result.verification.rewrites,1);assert.equal(agent.prompts.length,3);
+ assert.match(agent.prompts[1],/"guard":"numbers","factId":"score","invalidNumbers":\["9"\]/);
+ assert.match(agent.prompts[1],/Each fact ID may appear ONCE/);
+});

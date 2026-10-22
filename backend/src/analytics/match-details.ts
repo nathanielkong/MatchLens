@@ -1,3 +1,4 @@
+import {tacticalMeanings} from './tactical-rules.js';
 import {calculateStatistics,groupPressing,type ReplayEvent} from './statistics.js';
 export type MatchPlayer={id:string;teamId:string;name:string;shirt:number;starter:boolean;position?:string;role?:string};
 const round=(n:number)=>Math.round(n*1000)/1000;
@@ -38,6 +39,7 @@ export function matchDetails(source:ReplayEvent[],teamIds:string[],roster:MatchP
   });
  });
  const timeline=events.filter(e=>e.type==='shot'&&e.outcome==='goal'||['red_card','yellow_card','substitution','tactic_change','halftime','fulltime'].includes(e.type)).map(e=>({sequence:e.sequence,atSeconds:e.clock_seconds,period:e.period,periodClockSeconds:Number(e.details.periodClockSeconds??0),type:e.type,teamId:e.team_id,playerId:e.player_id,
+  inPlayerId:typeof e.details.inPlayerId==='string'?e.details.inPlayerId:null,outPlayerId:typeof e.details.outPlayerId==='string'?e.details.outPlayerId:null,instructionMeaning:e.type==='tactic_change'?tacticalMeanings[String(e.details.tactic)]??null:null,
   player:roster.find(p=>p.id===e.player_id)?.name??null,inPlayer:roster.find(p=>p.id===e.details.inPlayerId)?.name??null,outPlayer:roster.find(p=>p.id===e.details.outPlayerId)?.name??null,
   assist:roster.find(p=>p.id===e.details.assistPlayerId)?.name??null,tactic:typeof e.details.tactic==='string'?e.details.tactic:null,reason:typeof e.details.reason==='string'?e.details.reason:null,formation:typeof e.details.formation==='string'?e.details.formation:null,score:{home:e.home_score,away:e.away_score}}));
  const comparisons=events.filter(e=>['substitution','tactic_change','red_card'].includes(e.type)).map(change=>{

@@ -30,10 +30,10 @@ export function aiRoutes(db:Pick<Pool,'query'>){
   if(!req.is('application/json')){res.status(415).json({error:'Use application/json'});return;}
   const isQuestion=req.path.endsWith('/questions');
   const isProducer=req.path.endsWith('/producer');
-  const parsed=(isQuestion?request.extend({question:questionSchema}):isProducer?request.extend({output:z.enum(['talking_point','recap'])}):request).safeParse(req.body);
-  if(!parsed.success){res.status(400).json({error:'Provide a throughSequence, casual/analyst audience and a question of 5–300 characters when asking Q&A'});return;}
+  const parsed=(isQuestion?request.extend({question:questionSchema,history:z.array(z.string().uuid()).max(3).default([])}):isProducer?request.extend({output:z.enum(['talking_point','recap'])}):request).safeParse(req.body);
+  if(!parsed.success){res.status(400).json({error:'Provide a throughSequence, casual/analyst audience and a question of 2–300 characters when asking Q&A'});return;}
   const matchId=req.params.id;if(typeof matchId!=='string'){res.status(400).json({error:'Invalid match ID'});return;}
-  try {res.json(await generate(matchId,parsed.data.throughSequence,parsed.data.audience,req.ip??'unknown','question' in parsed.data?parsed.data.question as string:undefined,'output' in parsed.data?parsed.data.output as 'talking_point'|'recap':'summary'));}
+  try {res.json(await generate(matchId,parsed.data.throughSequence,parsed.data.audience,req.ip??'unknown','question' in parsed.data?parsed.data.question as string:undefined,'output' in parsed.data?parsed.data.output as 'talking_point'|'recap':'summary','history' in parsed.data?parsed.data.history as string[]:[]));}
   catch(e){const error=e instanceof AIError?e:new AIError('AI_UNAVAILABLE');res.status(error.httpStatus).json({error:error.code});}
  });
  return routes;

@@ -1,6 +1,8 @@
 import 'dotenv/config';
 import {aiRoutes} from './ai/routes.js';
 import express from 'express';
+import {fileURLToPath} from 'node:url';
+import {frontendRoutes} from './http/frontend.js';
 import { database, matchRoutes } from './db/routes.js';
 
 const app = express();
@@ -20,6 +22,8 @@ app.get('/api/health', (_req, res) => {
 // This route exposes local readiness only; it never sends a model request or returns credentials.
 app.use('/api',aiRoutes(database));
 app.use('/api/matches', matchRoutes);
+app.use('/api',(_req,res)=>res.status(404).json({error:'API route not found'}));
+if(process.env.NODE_ENV==='production')app.use(frontendRoutes(fileURLToPath(new URL('../../frontend/dist/',import.meta.url))));
 app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(error instanceof Error ? error.message : 'Request failed');
   res.status(500).json({ error: 'Unable to complete request' });

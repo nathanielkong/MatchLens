@@ -6,7 +6,7 @@ import {AIError} from './project.js';
 export type Audience='casual'|'analyst';
 export type EvidenceMatch={id:string;home_team_id:string;away_team_id:string;home_team:string;away_team:string};
 export type Fact={id:string;text:string;evidenceSequences:number[];prefix:{fromSequence:number;throughSequence:number}};
-export const evidenceVersion='evidence-catalog-v5';
+export const evidenceVersion='evidence-catalog-v6';
 export function evidencePacket(match:EvidenceMatch,source:ReplayEvent[],cutoff:number,audience:Audience,context:MatchContext={}){
  match={...match,home_team:match.home_team.replace(/^MatchLens /,''),away_team:match.away_team.replace(/^MatchLens /,'')};
  const events=source.filter(e=>e.sequence<=cutoff).sort((a,b)=>a.sequence-b.sequence);

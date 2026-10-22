@@ -15,6 +15,7 @@ try{
  const rewind=await history(first.sequence);assert.ok(rewind.some(r=>r.id===earlyId));assert.ok(rewind.every(r=>r.through_sequence<=first.sequence&&r.audience==='casual'));assert.ok(!rewind.some(r=>r.id===laterId||r.id===analystId));
  assert.deepEqual(await history(0),[]);
  const expanded=checks.map(c=>({...c,factIds:['score','chances','tactics','substitutions','players','formations','phases','change-windows','player-details','goalkeepers','time-window','lineups']}));await record(first.sequence,'casual','passed',expanded);
+ const tactical=checks.map(c=>({...c,factIds:['tactical-context','substitution-impact']}));await record(first.sequence,'casual','passed',tactical);
  const rejected=[{attempt:1,stage:'review',outcome:'rejected',factIds:['score']}];await record(first.sequence,'casual','withheld',rejected);
  const reject=async(fn:()=>Promise<unknown>,pattern:RegExp)=>{await db.query('SAVEPOINT rejected');await assert.rejects(fn,pattern);await db.query('ROLLBACK TO SAVEPOINT rejected');};
  await reject(()=>record(99999),/INVALID_REVIEW_CUTOFF/);
