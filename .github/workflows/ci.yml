@@ -17,3 +17,8 @@ jobs:
       - run: npm audit --omit=dev --audit-level=moderate
       - run: npm run evaluation:check -w backend
       - run: docker build -t matchlens:verify .
+      - run: npm run hosting:smoke
+      - name: Validate Azure hosting templates
+        run: |
+          az bicep install
+          npm run hosting:check

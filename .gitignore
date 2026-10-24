@@ -20,3 +20,5 @@ coverage/
 
 # Local reference material; not project-authored source.
 /Inside the Game.docx
+/deploy/*.local.json
+/deploy/.generated/

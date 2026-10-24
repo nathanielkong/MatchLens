@@ -19,7 +19,10 @@
     "test": "npm run test --workspaces --if-present",
     "db:azure": "node backend/scripts/migrate-azure.mjs",
     "db:finalise": "npm run db:finalise -w backend",
-    "db:test": "npm run db:test -w backend"
+    "db:test": "npm run db:test -w backend",
+    "hosting:check": "node deploy/check.mjs",
+    "hosting:prepare": "node deploy/prepare.mjs",
+    "hosting:smoke": "node deploy/smoke.mjs"
   },
   "devDependencies": {
     "concurrently": "^10.0.6",

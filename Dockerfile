@@ -6,6 +6,7 @@ COPY backend/package.json backend/package.json
 RUN npm ci
 COPY frontend frontend
 COPY backend backend
+COPY samples/showcase-prefix.json samples/showcase-prefix.json
 RUN npm run build && npm prune --omit=dev
 
 FROM node:24-bookworm-slim
