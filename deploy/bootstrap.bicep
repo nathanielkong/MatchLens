@@ -6,6 +6,88 @@ targetScope = 'resourceGroup'
 param prefix string = 'matchlens-web'
 param location string = resourceGroup().location
 param registryName string = 'ml${uniqueString(resourceGroup().id, prefix)}'
+param databaseServerName string = 'matchlens'
+
+// Keep the app subnet separate from private endpoints. PostgreSQL remains an
+// existing resource; this template does not replace it or alter its firewall.
+resource network 'Microsoft.Network/virtualNetworks@2024-05-01' = {
+  name: '${prefix}-network'
+  location: location
+  properties: {
+    addressSpace: { addressPrefixes: ['10.42.0.0/16'] }
+    subnets: [
+      {
+        name: 'container-apps'
+        properties: {
+          addressPrefix: '10.42.0.0/23'
+          delegations: [
+            { name: 'container-apps', properties: { serviceName: 'Microsoft.App/environments' } }
+          ]
+        }
+      }
+      {
+        name: 'private-endpoints'
+        properties: {
+          addressPrefix: '10.42.2.0/24'
+          privateEndpointNetworkPolicies: 'Disabled'
+        }
+      }
+    ]
+  }
+}
+
+resource appSubnet 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' existing = {
+  parent: network
+  name: 'container-apps'
+}
+resource endpointSubnet 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' existing = {
+  parent: network
+  name: 'private-endpoints'
+}
+resource database 'Microsoft.DBforPostgreSQL/flexibleServers@2024-08-01' existing = {
+  name: databaseServerName
+}
+resource databaseEndpoint 'Microsoft.Network/privateEndpoints@2024-05-01' = {
+  name: '${prefix}-postgres'
+  location: location
+  properties: {
+    subnet: { id: endpointSubnet.id }
+    privateLinkServiceConnections: [
+      {
+        name: 'postgresql'
+        properties: {
+          privateLinkServiceId: database.id
+          groupIds: ['postgresqlServer']
+        }
+      }
+    ]
+  }
+}
+
+// Azure creates the endpoint's A record via its DNS zone group. The original
+// matchlens.postgres.database.azure.com hostname still works with verified TLS.
+resource databaseDns 'Microsoft.Network/privateDnsZones@2024-06-01' = {
+  name: 'privatelink.postgres.database.azure.com'
+  location: 'global'
+}
+resource databaseDnsLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = {
+  parent: databaseDns
+  name: '${prefix}-link'
+  location: 'global'
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: { id: network.id }
+  }
+}
+resource databaseDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2024-05-01' = {
+  parent: databaseEndpoint
+  name: 'default'
+  properties: {
+    privateDnsZoneConfigs: [
+      { name: 'postgresql', properties: { privateDnsZoneId: databaseDns.id } }
+    ]
+  }
+}
 
 resource registry 'Microsoft.ContainerRegistry/registries@2023-07-01' = {
   name: registryName
@@ -43,6 +125,10 @@ resource environment 'Microsoft.App/managedEnvironments@2025-07-01' = {
   name: '${prefix}-environment'
   location: location
   properties: {
+    vnetConfiguration: {
+      infrastructureSubnetId: appSubnet.id
+      internal: false
+    }
     appLogsConfiguration: {
       destination: 'log-analytics'
       logAnalyticsConfiguration: {
@@ -56,10 +142,9 @@ resource environment 'Microsoft.App/managedEnvironments@2025-07-01' = {
   }
 }
 
-// A custom network/subnet must be selected before deploying this environment
-// if PostgreSQL will use private networking or fixed NAT egress. Never use the
-// environment's inbound static IP as a PostgreSQL outbound firewall rule.
 output registryName string = registry.name
 output registryServer string = registry.properties.loginServer
 output environmentName string = environment.name
 output identityName string = identity.name
+output databasePrivateEndpointName string = databaseEndpoint.name
+output virtualNetworkName string = network.name

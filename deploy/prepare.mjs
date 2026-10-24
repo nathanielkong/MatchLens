@@ -27,13 +27,19 @@ const parameters = {
     minimumReplicas: {value: 0},
   },
 };
-// Exclusive creation protects an existing release's secrets and parameters.
+// Preserve existing secrets and explicit deployment settings when refreshing a release.
 if (!existsSync(target)) writeFileSync(target, `${JSON.stringify(parameters, null, 2)}\n`, {mode: 0o600, flag: 'wx'});
-else console.log('Existing local parameters retained; update its imageTag explicitly for a later release.');
+else {
+  const existing = JSON.parse(readFileSync(target, 'utf8'));
+  assert.ok(existing.parameters?.sessionSecret && existing.parameters?.appDatabaseUrl, 'Existing local parameters must contain runtime secrets.');
+  existing.parameters.imageTag = parameters.parameters.imageTag;
+  writeFileSync(target, `${JSON.stringify(existing, null, 2)}\n`, {mode: 0o600});
+  console.log('Refreshed the commit tag; existing secrets and deployment settings retained.');
+}
 chmodSync(target, 0o600);
 console.log('Prepared deploy/production.local.json with restricted database access and the stable session secret.');
 console.log('No credentials were printed and no cloud resources were changed.');
-console.log('After selecting the database network plan and registering missing providers, deployment order is:');
+console.log('Private PostgreSQL networking is included in bootstrap. After registering missing providers, deployment order is:');
 console.log('1. az deployment group create -g matchlens-dev -n matchlens-hosting --template-file deploy/bootstrap.bicep');
 console.log('2. Read registryName from that deployment; build the current commit with az acr build --registry <registryName> --image matchlens:<imageTag> --platform linux/amd64 .');
 console.log('3. az deployment group create -g matchlens-dev -n matchlens-app --template-file deploy/app.bicep --parameters @deploy/production.local.json');
