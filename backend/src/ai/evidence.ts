@@ -1,4 +1,5 @@
 import {additionalMatchFacts,type MatchContext} from './match-facts.js';
+import {evidenceClock} from './clocks.js';
 import {detectTurningPoints} from '../analytics/turning-points.js';
 import {z} from 'zod';
 import {calculateStatistics,groupPressing,type ReplayEvent} from '../analytics/statistics.js';
@@ -28,7 +29,7 @@ export function evidencePacket(match:EvidenceMatch,source:ReplayEvent[],cutoff:n
  const red=events.filter(e=>e.type==='red_card'||e.type==='yellow_card');
  if(red.length)add('discipline',`${match.home_team} has ${home.redCards} red cards and ${home.yellowCards} yellow cards; ${match.away_team} has ${away.redCards} red cards and ${away.yellowCards} yellow cards. A dismissal changes the available players; it does not guarantee the match outcome.`,red);
  const goal=shots.filter(e=>e.outcome==='goal').at(-1);
- if(goal)add('latest-goal',`The latest recorded goal was for ${goal.team_id===match.home_team_id?match.home_team:match.away_team}, at elapsed ${Math.floor(goal.clock_seconds/60)}:${String(goal.clock_seconds%60).padStart(2,'0')}. The score after that event was ${goal.home_score}–${goal.away_score}. It changed the scoreline; a wider tactical explanation needs additional evidence.`,[goal]);
+ if(goal)add('latest-goal',`The latest recorded goal was for ${goal.team_id===match.home_team_id?match.home_team:match.away_team}, at ${evidenceClock(goal)}. The score after that event was ${goal.home_score}–${goal.away_score}. It changed the scoreline; a wider tactical explanation needs additional evidence.`,[goal]);
  const shift=detectTurningPoints(events,match.home_team_id,throughSequence).at(-1);
  if(shift){const label=shift.shiftedOutcome==='home'?`${match.home_team} win`:shift.shiftedOutcome==='away'?`${match.away_team} win`:'draw';
   add('turning-point',`At elapsed ${Math.floor(shift.atSeconds/60)}:${String(shift.atSeconds%60).padStart(2,'0')}, a ${shift.kind.replace('_',' ')} changed the model's ${label} probability from ${(shift.before[shift.shiftedOutcome]*100).toFixed(1)}% to ${(shift.after[shift.shiftedOutcome]*100).toFixed(1)}%. This is a same-clock model shift of ${(shift.largestShift*100).toFixed(1)} percentage points, not proof of tactical causality or real-football odds.`,events.filter(e=>e.sequence===shift.sequence));

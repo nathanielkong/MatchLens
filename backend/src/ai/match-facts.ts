@@ -1,4 +1,5 @@
 import {detailedMatchFacts} from './detailed-facts.js';
+import {evidenceClock} from './clocks.js';
 import {periodAnalysis} from '../analytics/periods.js';
 import {probabilityHistory} from '../probability/inference.js';
 import type {ReplayEvent} from '../analytics/statistics.js';
@@ -22,7 +23,7 @@ export function additionalMatchFacts(match:EvidenceMatch,events:ReplayEvent[],co
   return `${shots.length} shots, ${shots.filter(e=>e.outcome==='goal').length} goals, ${goals.filter(e=>e.sequence>after&&e.details.assistPlayerId===id).length} recorded assists, ${passes.filter(e=>e.outcome==='complete').length} completed passes from ${passes.length}`;
  };
  if(subs.length)add('substitutions',subs.slice(-6).map(e=>`${team(e.team_id)} at elapsed ${clock(e.clock_seconds)}: ${player(e.details.inPlayerId)} on for ${player(e.details.outPlayerId)}${e.details.reason==='fresh_legs'?' (recorded reason: fresh legs)':''}; incoming player's recorded contribution since entering: ${contributions(String(e.details.inPlayerId),e.sequence)}`).join('. ')+'. Contributions are observed counts, not proof a substitution caused a change.',subs);
- if(goals.length)add('goals',goals.map(e=>`${clock(e.clock_seconds)} elapsed: ${team(e.team_id)}, ${player(e.player_id)} scored${e.details.assistPlayerId?`, assist by ${player(e.details.assistPlayerId)}`:''}; score ${e.home_score}–${e.away_score}`).join('. ')+'. Only goals recorded through the cutoff.',goals);
+ if(goals.length)add('goals',goals.map(e=>`${evidenceClock(e)}: ${team(e.team_id)}, ${player(e.player_id)} scored${e.details.assistPlayerId?`, assist by ${player(e.details.assistPlayerId)}`:''}; score ${e.home_score}–${e.away_score}`).join('. ')+'. Only goals recorded through the cutoff. Elapsed time includes previous-half added time; use the supplied half clock and classification.',goals);
  if(context.homeFormation&&context.awayFormation&&[context.homeFormation,context.awayFormation].every(s=>/^\d(?:-\d){2,4}$/.test(s)))add('formations',`Recorded starting formations: ${match.home_team} ${context.homeFormation}; ${match.away_team} ${context.awayFormation}. The current simulator keeps these formations fixed; tactical instruction changes are separate from formation changes.`);
  const p=probabilityHistory(events,match.home_team_id,last.clock_seconds).current;
  add('probabilities',`Simulation estimates at this moment: ${match.home_team} win ${(p.home*100).toFixed(1)}%, draw ${(p.draw*100).toFixed(1)}%, ${match.away_team} win ${(p.away*100).toFixed(1)}%. These are synthetic-model estimates, not real-football odds or a guaranteed outcome.`);

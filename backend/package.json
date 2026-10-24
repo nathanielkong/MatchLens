@@ -25,7 +25,9 @@
     "full-match:check": "tsx src/tests/full-match.integration.ts",
     "evidence:check": "tsx src/tests/evidence.integration.ts",
     "evaluation:check": "tsx src/tests/evaluation.check.ts",
-    "ai:evaluate": "tsx src/ai/evaluate.ts"
+    "ai:evaluate": "tsx src/ai/evaluate.ts",
+    "chat:check": "tsx src/tests/conversation.integration.ts",
+    "features:check": "tsx src/tests/live-features.integration.ts"
   },
   "dependencies": {
     "@azure/ai-projects": "^2.9.0",
