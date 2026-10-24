@@ -4,6 +4,7 @@ import {reviewedWorkflow} from './reviews.js';
 import {postgresBudget} from './budget.js';
 import {AIError,ProjectAgentClient,projectConfig} from './project.js';
 import {conversationStore} from './conversation.js';
+import {postgresConversationStore} from './conversation-db.js';
 import {questionWindow} from './detailed-facts.js';
 import type {MatchContext,EvidencePlayer} from './match-facts.js';
 import {evidencePacket,type Audience,type EvidenceMatch} from './evidence.js';
@@ -21,12 +22,12 @@ export async function loadEvidencePacket(db:Pick<Pool,'query'>,matchId:string,cu
  return {packet,events,players};
 }
 export function insightService(db:Pick<Pool,'query'>){
- let agent:ProjectAgentClient|undefined;const chat=conversationStore();
+ let agent:ProjectAgentClient|undefined;const chat=process.env.AI_PERSIST_CONVERSATIONS==='true'||process.env.NODE_ENV==='production'?postgresConversationStore(db):conversationStore();
  return async(matchId:string,cutoff:number,audience:Audience,clientId:string,question?:string,purpose:'talking_point'|'recap'|'summary'='summary',historyIds:string[]=[])=>{
   if(process.env.AI_PROVIDER!=='foundry-agent')throw new AIError('AI_NOT_CONFIGURED');
   const config=projectConfig();if(!config.enabled)throw new AIError('AI_DISABLED');
-  const scope={matchId,audience,throughSequence:cutoff,owner:clientId},previous=chat.read(question?historyIds:[],scope),lastTurn=previous.context.at(-1);
-  const follows=!!question&&(/\b(?:he|him|his|she|her|they|them|their|that|those|afterwards|earlier|same)\b/i.test(question)||/^(?:why|how so|and\b|what about\b)[?!. ]*$/i.test(question));
+  const scope={matchId,audience,throughSequence:cutoff,owner:clientId},previous=await chat.read(question?historyIds:[],scope),lastTurn=previous.context.at(-1);
+  const follows=!!question&&(/\b(?:he|him|his|she|her|they|them|their|that|those|afterwards|earlier|same)\b/i.test(question)||/^(?:why\b|how so\b|and\b|what about\b)/i.test(question));
   const inheritedWindow=question&&/that (?:period|window|spell)|same (?:period|window)|during that/i.test(question)?lastTurn?.window:undefined;
   const {packet,events,players}=await loadEvidencePacket(db,matchId,cutoff,audience,question,{focusPlayerIds:follows?lastTurn?.playerIds:undefined,focusChangeSequences:follows?lastTurn?.eventSequences:undefined,inheritedWindow});
   agent??=new ProjectAgentClient(config,postgresBudget(db));
@@ -34,7 +35,7 @@ export function insightService(db:Pick<Pool,'query'>){
   if(question){
    const result=answer.result,resolved='resolvedQuestion' in result?String(result.resolvedQuestion):question,text=result.claims.map(c=>c.text).join(' '),mentioned=(resolved+' '+text).toLowerCase();
    const window=questionWindow(resolved,packet.atSeconds)??inheritedWindow;
-   const conversationId=chat.remember({...scope,throughSequence:packet.throughSequence},{question:resolved,answer:text||('refusal' in result?String(result.refusal):''),throughSequence:packet.throughSequence,factIds:result.claims.map(c=>c.id),playerIds:players.filter(p=>mentioned.includes(p.name.toLowerCase())).map(p=>p.id),eventSequences:[...new Set(result.claims.flatMap(c=>c.evidenceSequences))],window:window?{from:window.from,to:window.to}:undefined});
+   const conversationId=await chat.remember({...scope,throughSequence:packet.throughSequence},{question:resolved,answer:text||('refusal' in result?String(result.refusal):''),throughSequence:packet.throughSequence,factIds:result.claims.map(c=>c.id),playerIds:players.filter(p=>mentioned.includes(p.name.toLowerCase())).map(p=>p.id),eventSequences:[...new Set(result.claims.flatMap(c=>c.evidenceSequences))],window:window?{from:window.from,to:window.to}:undefined});
    return {...answer,conversationId,contextReset:previous.reset};
   }
   if(purpose==='summary')return answer;

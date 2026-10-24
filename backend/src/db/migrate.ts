@@ -64,7 +64,11 @@ try {
     await client.query(await readFile(new URL('../../src/db/012-tactical-review-facts.sql', import.meta.url), 'utf8'));
     await client.query('INSERT INTO schema_migrations(version) VALUES(12)');
   }
+  if (!(await client.query('SELECT 1 FROM schema_migrations WHERE version=13')).rowCount) {
+    await client.query(await readFile(new URL('../../src/db/013-conversation-sessions.sql', import.meta.url), 'utf8'));
+    await client.query('INSERT INTO schema_migrations(version) VALUES(13)');
+  }
   await client.query('COMMIT');
-  console.log('Database schema ready (version 12).');
+  console.log('Database schema ready (version 13).');
 } catch (error) { await client.query('ROLLBACK'); throw error; }
 finally { client.release(); await pool.end(); }

@@ -1,4 +1,4 @@
-import {useEffect,useRef,useState} from 'react';
+import {useCallback,useEffect,useRef,useState} from 'react';
 import {advanceClock,type Cursor} from './motion';
 import {get,type Match,type Player,type State,type VisualReplay} from './types';
 // Deliberately separate from evidence/state responses. This cache is for drawing only.
@@ -9,16 +9,16 @@ export function useReplay(match:Match|undefined,retry:number){
  const [playing,setPlaying]=useState(false),[speed,setSpeedState]=useState(1),[time,setTime]=useState(0);
  const [state,setState]=useState<State|null>(null),[visual,setVisual]=useState<VisualReplay|null>(null),[players,setPlayers]=useState<Player[]>([]);
  const [error,setError]=useState(''),[busy,setBusy]=useState(true);
- const pause=()=>{playingRef.current=false;setPlaying(false);};
- const resetRequest=()=>{generation.current++;request.current?.abort();request.current=null;lastKey.current='';setState(null);};
- const seek=(seconds:number)=>{pause();resetRequest();cursor.current={time:Math.max(0,Math.min(match?.duration_seconds??0,seconds))};};
- const jump=(sequence:number,seconds?:number)=>{pause();resetRequest();cursor.current={time:seconds??cursor.current.time,sequence:Math.max(0,sequence)};setTime(cursor.current.time);};
- const toggle=()=>{if(playingRef.current){pause();return;}if(cursor.current.time>=(match?.duration_seconds??0))seek(0);
-  cursor.current={time:cursor.current.time};playingRef.current=true;setPlaying(true);};
- const setSpeed=(value:number)=>{speedRef.current=value;setSpeedState(value);};
+ const pause=useCallback(()=>{playingRef.current=false;setPlaying(false);},[]);
+ const resetRequest=useCallback(()=>{generation.current++;request.current?.abort();request.current=null;lastKey.current='';setState(null);},[]);
+ const seek=useCallback((seconds:number)=>{pause();resetRequest();cursor.current={time:Math.max(0,Math.min(match?.duration_seconds??0,seconds))};setTime(cursor.current.time);},[match?.duration_seconds,pause,resetRequest]);
+ const jump=useCallback((sequence:number,seconds?:number)=>{pause();resetRequest();cursor.current={time:seconds??cursor.current.time,sequence:Math.max(0,sequence)};setTime(cursor.current.time);},[pause,resetRequest]);
+ const toggle=useCallback(()=>{if(playingRef.current){pause();return;}if(cursor.current.time>=(match?.duration_seconds??0))seek(0);
+  cursor.current={time:cursor.current.time};playingRef.current=true;setPlaying(true);},[match?.duration_seconds,pause,seek]);
+ const setSpeed=useCallback((value:number)=>{speedRef.current=value;setSpeedState(value);},[]);
  useEffect(()=>{
   if(!match)return;
-  const controller=new AbortController();let handle=0,previous=0,lastUi=-Infinity;
+  const controller=new AbortController();let handle=0,previous=0,lastUi=-Infinity,lastFetch=-Infinity;
   pause();resetRequest();cursor.current={time:0};setTime(0);setVisual(null);setPlayers([]);setError('');setBusy(true);
   const preload=async()=>{
    let data=visualCache.get(match.id);
@@ -36,7 +36,7 @@ export function useReplay(match:Match|undefined,retry:number){
     if(c.signal.aborted||controller.signal.aborted||version!==generation.current)return;
     if(cursor.current.sequence!==undefined){cursor.current={time:data.atSeconds,sequence:data.throughSequence};setTime(data.atSeconds);}
     // An old response may lag forward playback, but can never cross a rewind.
-    if(data.atSeconds<=cursor.current.time)setState(data);
+    if(data.atSeconds<=cursor.current.time){setState(data);setError('');}
    }).catch(e=>{if(!c.signal.aborted&&!controller.signal.aborted){setError(e.message);pause();}})
     .finally(()=>{if(request.current===c){request.current=null;setBusy(false);}});
   };
@@ -45,12 +45,13 @@ export function useReplay(match:Match|undefined,retry:number){
    if(playingRef.current&&!document.hidden){cursor.current={time:advanceClock(cursor.current.time,dt,speedRef.current,match.duration_seconds)};
     if(cursor.current.time>=match.duration_seconds)pause();}
    if(timeline.current&&Number(timeline.current.value)!==cursor.current.time)timeline.current.value=String(cursor.current.time);
-   if(timestamp-lastUi>=100){lastUi=timestamp;setTime(cursor.current.time);refresh();}
+   if(timestamp-lastUi>=250){lastUi=timestamp;setTime(cursor.current.time);}
+   if(!playingRef.current||timestamp-lastFetch>=750){lastFetch=timestamp;refresh();}
    handle=requestAnimationFrame(tick);
   };
   const visibility=()=>{previous=0;};document.addEventListener('visibilitychange',visibility);
   handle=requestAnimationFrame(tick);
   return()=>{controller.abort();request.current?.abort();request.current=null;generation.current++;cancelAnimationFrame(handle);document.removeEventListener('visibilitychange',visibility);};
  },[match,retry]);
- return {cursor,timeline,playing,speed,time,state,visual,players,error,busy,seek,jump,toggle,setSpeed};
+ return {cursor,timeline,playing,speed,time,state,visual,players,error,busy,seek,jump,toggle,pause,setSpeed};
 }

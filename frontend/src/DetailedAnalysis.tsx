@@ -3,9 +3,9 @@ import {get,type Match,type State} from './types';
 import type {MatchDetails} from '../../backend/src/analytics/match-details';
 const clock=(n:number)=>`${Math.floor(n/60)}:${String(Math.floor(n%60)).padStart(2,'0')}`;
 const short=(n:string)=>n.replace(/^MatchLens /,'');
-export function DetailedAnalysis({tab,match,state,focus,onSeek,preview}:{tab:string;match:Match;state:State|null|undefined;focus:string;onSeek:(n:number)=>void;preview:boolean}){
+export function DetailedAnalysis({tab,match,state,focus,onSeek,preview,active=true}:{tab:string;match:Match;state:State|null|undefined;focus:string;onSeek:(n:number)=>void;preview:boolean;active?:boolean}){
  const [value,setValue]=useState<(MatchDetails&{matchId:string})|null>(null),[error,setError]=useState(''),sequence=state?.throughSequence??0;
- useEffect(()=>{if(preview||!sequence)return;const c=new AbortController(),timer=setTimeout(()=>{get<MatchDetails&{matchId:string}>(`/matches/${match.id}/analysis?throughSequence=${sequence}`,c.signal).then(v=>{setValue(v);setError('');}).catch(()=>{if(!c.signal.aborted)setError('Analysis could not be loaded.');});},400);return()=>{clearTimeout(timer);c.abort();};},[match.id,sequence,preview]);
+ useEffect(()=>{if(preview||!sequence||!active)return;const c=new AbortController(),timer=setTimeout(()=>{get<MatchDetails&{matchId:string}>(`/matches/${match.id}/analysis?throughSequence=${sequence}`,c.signal).then(v=>{setValue(v);setError('');}).catch(()=>{if(!c.signal.aborted)setError('Analysis could not be loaded.');});},400);return()=>{clearTimeout(timer);c.abort();};},[match.id,sequence,preview,active]);
  const d=value&&value.matchId===match.id&&value.throughSequence<=sequence?value:null;
  const team=(id:string)=>short(id===match.home_team_id?match.home_team:match.away_team),shown=(id:string)=>focus==='both'||id===focus;
  if(preview)return <p className="detail-empty">Full analysis is available with a connected match. This sample is a short prefix.</p>;

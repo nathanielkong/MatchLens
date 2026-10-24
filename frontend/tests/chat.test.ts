@@ -1,9 +1,16 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {appendChat,chatHistory,visibleChat} from '../src/chat.ts';
+import {appendChat,chatHistory,visibleChat,readChat,saveChat,tabChatStorage} from '../src/chat.ts';
 const turn=(throughSequence:number,conversationId=`turn-${throughSequence}`,matchId='match',audience='casual')=>({conversationId,result:{matchId,audience,throughSequence}});
 test('visible chat and sent history omit future, other-match and other-audience answers',()=>{
  const turns=[turn(1),turn(2),turn(3),turn(4),turn(5,'other','other'),turn(5,'analyst','match','analyst')];
  assert.deepEqual(visibleChat(turns,'match','casual',2).map(t=>t.conversationId),['turn-1','turn-2']);assert.deepEqual(chatHistory(turns,'match','casual',4),['turn-2','turn-3','turn-4']);assert.deepEqual(chatHistory(turns,'match','casual',0),[]);
+});
+test('tab storage restores bounded valid turns and ignores corrupt or future-cited data',()=>{
+ let raw='';const storage={getItem:()=>raw,setItem:(_key:string,value:string)=>{raw=value;}};
+ const data={...turn(3),result:{...turn(3).result,question:'Who scored?',atSeconds:30,verification:{accepted:true},claims:[{id:'goals',text:'A goal.',evidenceSequences:[2]}]}};
+ saveChat(storage,'chat',[data]);assert.deepEqual(readChat(storage,'chat'),[data]);raw='{bad';assert.deepEqual(readChat(storage,'chat'),[]);
+ raw=JSON.stringify([{...data,result:{...data.result,claims:[{id:'goals',text:'Future.',evidenceSequences:[4]}]}}]);assert.deepEqual(readChat(storage,'chat'),[]);
+ const original=Object.getOwnPropertyDescriptor(globalThis,'sessionStorage');try{Object.defineProperty(globalThis,'sessionStorage',{configurable:true,get(){throw new Error('Storage disabled');}});assert.equal(tabChatStorage(),null);assert.deepEqual(readChat(null,'chat'),[]);assert.doesNotThrow(()=>saveChat(null,'chat',[]));}finally{if(original)Object.defineProperty(globalThis,'sessionStorage',original);else Reflect.deleteProperty(globalThis,'sessionStorage');}
 });
 test('asking after rewind branches the chat and discards future context rather than resurrecting it',()=>{
  const next=appendChat([turn(1),turn(3),turn(8)],turn(3,'new-branch'));assert.deepEqual(next.map(t=>t.conversationId),['turn-1','turn-3','new-branch']);assert.ok(!chatHistory(next,'match','casual',10).includes('turn-8'));

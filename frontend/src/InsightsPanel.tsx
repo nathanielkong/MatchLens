@@ -1,5 +1,6 @@
 import {useEffect,useRef,useState} from 'react';
-import {appendChat,chatHistory,visibleChat} from './chat';
+import {appendChat,chatHistory,visibleChat,readChat,saveChat,tabChatStorage} from './chat';
+import {useAIJobs} from './AIJobs';
 import {ReviewDetails} from './ReviewDetails';
 import type {State} from './types';
 type Insight={question?:string;refusal?:string;clarification?:boolean;matchId:string;throughSequence:number;atSeconds:number;audience:'casual'|'analyst';label:string;
@@ -16,45 +17,47 @@ function GroundedText({value,onSeek}:{value:Result;onSeek:(n:number)=>void}){
    <details className="summary-sources"><summary>Sources · {result.claims.length} {result.claims.length===1?'fact':'facts'}</summary><ol>{result.claims.map(c=><li key={c.id}><strong>{factNames[c.id]??'Evidence'}</strong><p>{c.sourceText??c.text}</p><div className="insight-citations">{c.evidenceSequences.map(n=><button key={n} onClick={()=>onSeek(n)}>Event {n} ↗</button>)}</div></li>)}</ol></details></>}
  </div>;
 }
-export function InsightsPanel({matchId,state,onSeek,onPause,preview}:{matchId:string;state:State|null|undefined;onSeek:(sequence:number)=>void;onPause:()=>void;preview:boolean}){
+export function InsightsPanel({matchId,state,onSeek,onPause,preview,active=true}:{matchId:string;state:State|null|undefined;onSeek:(sequence:number)=>void;onPause:()=>void;preview:boolean;active?:boolean}){
+ const jobs=useAIJobs(),chatKey=`matchlens-chat-v1:${matchId}`;
  const [audience,setAudience]=useState<'casual'|'analyst'>('casual'),[busy,setBusy]=useState<'summary'|'question'|''>(''),[error,setError]=useState(''),[errorKind,setErrorKind]=useState('');
  const [question,setQuestion]=useState(''),[answers,setAnswers]=useState<Result[]>([]),[pendingQuestion,setPendingQuestion]=useState(''),[pendingSequence,setPendingSequence]=useState(0),[summary,setSummary]=useState<Result|null>(null);
  const [ready,setReady]=useState(false),requestId=useRef(0),sequence=state?.throughSequence??0;
  useEffect(()=>{if(preview)return;const c=new AbortController();fetch('/api/ai/status',{signal:c.signal}).then(r=>r.json()).then(s=>setReady(s.configured&&s.enabled)).catch(()=>undefined);return()=>c.abort();},[preview]);
- useEffect(()=>{requestId.current++;setAnswers([]);setPendingQuestion('');setSummary(null);setError('');setBusy('');setQuestion('');},[matchId,audience]);
+ useEffect(()=>{requestId.current++;setAnswers(readChat<Result>(tabChatStorage(),`${chatKey}:${audience}`));setPendingQuestion('');setSummary(null);setError('');setBusy('');setQuestion('');},[matchId,audience]);
  async function generate(ask=false){
   if(busy||!sequence||(ask&&question.trim().length<2))return;
+  const finish=jobs.begin(ask?'Match answer':'Match summary');if(!finish)return;
   onPause();const id=++requestId.current,kind=ask?'question':'summary',asked=question.trim();setBusy(kind);setError('');setErrorKind(kind);if(ask){setPendingQuestion(asked);setPendingSequence(sequence);setQuestion('');}else setSummary(null);
   try{
    const response=await fetch(`/api/matches/${encodeURIComponent(matchId)}/${ask?'questions':'insights'}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({throughSequence:sequence,audience,...(ask?{question:asked,history:chatHistory(answers,matchId,audience,sequence)}:{})}),signal:AbortSignal.timeout(260000)});
    const body=await response.json();if(!response.ok)throw new Error(body.error??'AI_UNAVAILABLE');
-   if(id===requestId.current){if(ask)setAnswers(previous=>appendChat(previous,body,body.contextReset));else setSummary(body);}
+   if(id===requestId.current){if(ask)setAnswers(previous=>{const next=appendChat(previous,body,body.contextReset);saveChat(tabChatStorage(),`${chatKey}:${audience}`,next);return next;});else setSummary(body);}
   }catch(e){if(id===requestId.current){setError(errors[e instanceof Error?e.message:'']??'The answer is unavailable. No unverified text was shown.');if(ask)setQuestion(asked);}}
-  finally{window.dispatchEvent(new Event('matchlens-reviews-updated'));if(id===requestId.current){setBusy('');setPendingQuestion('');}}
+  finally{finish();window.dispatchEvent(new Event('matchlens-reviews-updated'));if(id===requestId.current){setBusy('');setPendingQuestion('');}}
  }
  // Both outputs must independently disappear when the user rewinds before them.
  const visible=(value:Result|null)=>value&&value.result.matchId===matchId&&value.result.audience===audience&&value.result.throughSequence<=sequence?value:null;
  const visibleSummary=visible(summary),visibleAnswers=visibleChat(answers,matchId,audience,sequence);
  return <section className="panel insights-panel" aria-label="Evidence summary">
   <div className="panel-heading"><div><p className="eyebrow muted">03 / EVIDENCE TO AIR</p><h3>The match so far.</h3></div>
-  <div className="segmented" aria-label="Summary audience"><button aria-pressed={audience==='casual'} onClick={()=>setAudience('casual')}>Casual</button><button aria-pressed={audience==='analyst'} onClick={()=>setAudience('analyst')}>Analyst</button></div></div>
+  <div className="segmented" aria-label="Summary audience"><button aria-pressed={audience==='casual'} disabled={!!jobs.active} onClick={()=>setAudience('casual')}>Casual</button><button aria-pressed={audience==='analyst'} disabled={!!jobs.active} onClick={()=>setAudience('analyst')}>Analyst</button></div></div>
   <div className="insights-content">
    {visibleSummary?<GroundedText value={visibleSummary} onSeek={onSeek}/>:<p className="insight-empty">{preview?'Connect a match to use AI summaries.':busy==='summary'?'Writing and checking…':'The story from kickoff to your selected moment.'}</p>}
    {error&&errorKind==='summary'&&<p className="insight-error" role="alert">{error}</p>}
-   <div className="insights-actions"><button className="primary-link" disabled={preview||!ready||!!busy||!sequence} onClick={()=>generate()}>{busy==='summary'?'Checking evidence…':visibleSummary&&visibleSummary.result.throughSequence<sequence?'Update summary':'Generate summary'} <span aria-hidden="true">↗</span></button>{(preview||!ready)&&<small>{preview?'Sample preview':'AI unavailable'}</small>}</div>
-   <div className="chat-heading"><h4>Ask about this match</h4>{answers.length>0&&<button type="button" disabled={!!busy} onClick={()=>{setAnswers([]);setQuestion('');setError('');}}>New chat ↗</button>}</div>
+   <div className="insights-actions"><button className="primary-link" disabled={preview||!ready||!!jobs.active||!sequence} onClick={()=>generate()}>{busy==='summary'?'Checking evidence…':visibleSummary&&visibleSummary.result.throughSequence<sequence?'Update summary':'Generate summary'} <span aria-hidden="true">↗</span></button>{(preview||!ready)&&<small>{preview?'Sample preview':'AI unavailable'}</small>}</div>
+   <div className="chat-heading"><h4>Ask about this match</h4>{answers.length>0&&<button type="button" disabled={!!jobs.active} onClick={()=>{setAnswers([]);saveChat(tabChatStorage(),`${chatKey}:${audience}`,[]);setQuestion('');setError('');}}>New chat ↗</button>}</div>
    <div className="match-conversation" aria-label="Match conversation" aria-live="polite" aria-busy={busy==='question'}>
     {visibleAnswers.map((value,i)=><article className="chat-turn" key={value.conversationId??`${value.result.throughSequence}-${i}`}><p className="asked-question"><span>You</span>{value.result.question}</p><div className="match-answer" aria-label="Match answer"><GroundedText value={value} onSeek={onSeek}/></div></article>)}
     {pendingQuestion&&sequence>=pendingSequence&&<article className="chat-turn pending"><p className="asked-question"><span>You</span>{pendingQuestion}</p><p className="chat-pending" role="status">Checking the match evidence…</p></article>}
    </div>
    <form className="match-question" onSubmit={e=>{e.preventDefault();void generate(true);}}>
     <label className="sr-only" htmlFor="match-question">Ask about this match</label>
-    <div><input id="match-question" value={question} onChange={e=>setQuestion(e.target.value)} minLength={2} maxLength={300} placeholder={visibleAnswers.length?'Ask a follow-up…':'Compare the halves, a player, or a tactical change…'} disabled={preview||!!busy} required/><button type="submit" disabled={preview||!ready||!!busy||!sequence||question.trim().length<2}>{busy==='question'?'Checking…':'Ask MatchLens ↗'}</button></div>
+    <div><input id="match-question" value={question} onChange={e=>setQuestion(e.target.value)} minLength={2} maxLength={300} placeholder={visibleAnswers.length?'Ask a follow-up…':'Compare the halves, a player, or a tactical change…'} disabled={preview||!!jobs.active} required/><button type="submit" disabled={preview||!ready||!!jobs.active||!sequence||question.trim().length<2}>{busy==='question'?'Checking…':'Ask MatchLens ↗'}</button></div>
    </form>
-   <div className="question-suggestions" aria-label="Suggested match questions">{(visibleAnswers.length?['Why?','What happened afterwards?','Compare with earlier in the match.']:['Why did the tactical instructions change?','Which substitutes contributed?','What happened in the last 10 minutes?','How did the goalkeepers perform?']).map(q=><button type="button" key={q} disabled={!!busy||preview} onClick={()=>setQuestion(q)}>{q}</button>)}</div>
+   <div className="question-suggestions" aria-label="Suggested match questions">{(visibleAnswers.length?['Why?','What happened afterwards?','Compare with earlier in the match.']:['Why did the tactical instructions change?','Which substitutes contributed?','What happened in the last 10 minutes?','How did the goalkeepers perform?']).map(q=><button type="button" key={q} disabled={!!jobs.active||preview} onClick={()=>setQuestion(q)}>{q}</button>)}</div>
    {error&&errorKind==='question'&&<p className="insight-error" role="alert">{error}</p>}
    <p className="insight-disclaimer">AI can make mistakes. Check the linked evidence.</p>
-   <ReviewDetails matchId={matchId} sequence={sequence} audience={audience} preview={preview} onSeek={onSeek}/>
+   <ReviewDetails active={active} matchId={matchId} sequence={sequence} audience={audience} preview={preview} onSeek={onSeek}/>
   </div>
  </section>;
 }

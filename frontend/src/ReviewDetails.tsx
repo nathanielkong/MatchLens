@@ -5,18 +5,18 @@ const titles:Record<string,string>={summary:'Summary',question:'Question',talkin
 const outcomes:Record<string,string>={passed:'Passed',revised:'Revised & passed',withheld:'Withheld',unsupported:'No supporting facts',unavailable:'Unavailable'};
 const facts:Record<string,string>={score:'Score',chances:'Shots',passing:'Passing',pressing:'Pressing',discipline:'Cards','latest-goal':'Latest goal','turning-point':'Probability shift',tactics:'Tactics',changes:'Changes',substitutions:'Substitutions',goals:'Goals',formations:'Formations',probabilities:'Result estimates',periods:'Half comparisons',players:'Players'};
 const clock=(n:number)=>`${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`;
-export function ReviewDetails({matchId,sequence,audience,preview,onSeek}:{matchId:string;sequence:number;audience:string;preview:boolean;onSeek:(n:number)=>void}){
+export function ReviewDetails({matchId,sequence,audience,preview,onSeek,active=true}:{matchId:string;sequence:number;audience:string;preview:boolean;onSeek:(n:number)=>void;active?:boolean}){
  const [open,setOpen]=useState(false),[revision,setRevision]=useState(0),[loading,setLoading]=useState(false),[error,setError]=useState(false);
  const [history,setHistory]=useState<{key:string;items:Review[]}|null>(null),key=matchId+':'+audience;
  useEffect(()=>{const refresh=()=>setRevision(n=>n+1);window.addEventListener('matchlens-reviews-updated',refresh);return()=>window.removeEventListener('matchlens-reviews-updated',refresh);},[]);
  useEffect(()=>{
-  if(!open||preview)return;
+  if(!open||preview||!active)return;
   const controller=new AbortController(),timer=setTimeout(()=>{
    setLoading(true);setError(false);
    fetch(`/api/matches/${encodeURIComponent(matchId)}/reviews?throughSequence=${sequence}&audience=${audience}`,{signal:controller.signal}).then(async r=>{if(!r.ok)throw new Error();return r.json();}).then(body=>{if(!controller.signal.aborted)setHistory({key,items:body.reviews});}).catch(()=>{if(!controller.signal.aborted)setError(true);}).finally(()=>{if(!controller.signal.aborted)setLoading(false);});
   },350);
   return()=>{clearTimeout(timer);controller.abort();};
- },[open,preview,matchId,sequence,audience,key,revision]);
+ },[open,preview,matchId,sequence,audience,key,revision,active]);
  // Filtering again during render prevents a late response exposing a later cutoff.
  const visible=history?.key===key?history.items.filter(r=>r.match_id===matchId&&r.audience===audience&&r.through_sequence<=sequence):[];
  return <details className="room-details review-details" onToggle={e=>setOpen(e.currentTarget.open)}><summary>Review details</summary>

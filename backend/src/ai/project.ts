@@ -1,5 +1,5 @@
 import {AIProjectClient} from '@azure/ai-projects';
-import {DefaultAzureCredential} from '@azure/identity';
+import {DefaultAzureCredential,ManagedIdentityCredential} from '@azure/identity';
 import {createHash,randomUUID} from 'node:crypto';
 import type {BudgetStore} from './budget.js';
 import './foundry.js';
@@ -26,7 +26,8 @@ export interface AgentTransport {
  generate(input:string,maxOutputTokens:number):Promise<{text:string;inputTokens:number;outputTokens:number}>;
 }
 export function azureAgentTransport(config:ProjectConfig,options:{credential?:ConstructorParameters<typeof AIProjectClient>[1];fetch?:typeof fetch}={}):AgentTransport {
- const project=new AIProjectClient(config.endpoint,options.credential??new DefaultAzureCredential(),{retryOptions:{maxRetries:0}});
+ const credential=options.credential??(process.env.NODE_ENV==='production'?new ManagedIdentityCredential(process.env.AZURE_CLIENT_ID?{clientId:process.env.AZURE_CLIENT_ID}:{}):new DefaultAzureCredential());
+ const project=new AIProjectClient(config.endpoint,credential,{retryOptions:{maxRetries:0}});
  const baseClient=project.getOpenAIClient({maxRetries:0,timeout:config.timeoutMs});
  // AI Projects overrides the fetch option passed to getOpenAIClient. Inject
  // the test transport afterwards so unit tests cannot reach Azure accidentally.
